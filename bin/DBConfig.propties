@@ -1,0 +1,31 @@
+# 读取的经营系统的数据地址 用户名和密码
+
+#read db
+read_driverClassName=oracle.jdbc.driver.OracleDriver
+#validationQuery=SELECT 1
+read_jdbc_url=jdbc:oracle:thin:@10.25.254.213:1521:jygl1
+#read_jdbc_url=jdbc:oracle:thin:@10.25.254.60:1521:jygl1
+read_jdbc_username=njtcuser
+read_jdbc_password=njtcuser
+
+
+
+#往财务系统里写的数据库地址 用户名和密码
+
+#write db
+write_driverClassName=oracle.jdbc.driver.OracleDriver
+#validationQuery=SELECT 1 
+write_jdbc_url=jdbc:oracle:thin:@10.25.254.81:1521:easdb1
+write_jdbc_username=njtc
+write_jdbc_password=njtc
+
+
+
+
+#write db
+#write_driverClassName=oracle.jdbc.driver.OracleDriver
+#validationQuery=SELECT 1 
+#write_jdbc_url=jdbc:oracle:thin:@10.25.254.90:1521:easdb
+#write_jdbc_username=njtcbak
+#write_jdbc_password=njtcbak
+
