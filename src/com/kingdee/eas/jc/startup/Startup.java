@@ -44,7 +44,7 @@ public class Startup {
 				DataProcess dp = new DataProcess();
 				dp.processEventList(list);
 				try {
-					Thread.sleep(6000);
+					Thread.sleep(600000);
 				} catch (InterruptedException e) {
 					LoggerUtil.logger.error(e.getMessage());
 					e.printStackTrace();

@@ -1,6 +1,7 @@
 package com.kingdee.eas.jc.process;
 
 import java.math.BigDecimal;
+import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.Date;
@@ -9,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.List;
 
 import oracle.sql.TIMESTAMP;
@@ -68,7 +70,13 @@ public class DataProcess {
 
 		// 读取事件表对应的业务表里的数据.
 		Object[] obj = readData(eventinfo);
+		//添加对燃油出入库的处理流程.
+		if (false) {
+			
+		} else if(false) {
 
+		}else
+		
 		if ("1".equals(eventinfo.getEventstatus())) {
 			writeData(eventinfo, obj);
 		} else if ("2".equals(eventinfo.getEventstatus())) {
@@ -91,7 +99,7 @@ public class DataProcess {
 		int fieldnumber = 0;
 		String itemSql = null;
 		try {
-			PropertiesUtil pu = new PropertiesUtil("resource/" + table
+			PropertiesUtil pu = new PropertiesUtil("resource/" + table.toUpperCase()
 					+ ".properties");
 			fpk = pu.getValue(Constants.PK);
 			fieldnumber = Integer.parseInt(pu.getValue(Constants.FIELD_NUMBER));
@@ -107,20 +115,20 @@ public class DataProcess {
 			e1.printStackTrace();
 			LoggerUtil.logger.error(e1.getMessage());
 		}
-
-		DBReadUtil dbread = DBReadUtil.getInstance();
 		Connection readConn = null;
 		Statement stmt = null;
 		ResultSet rs = null;
 		try {
 			// 读数连接
-			readConn = dbread.getConnection();
-			String readSql = "select " + itemSql + " from " + table + " where "
+			DBReadUtil dbread = DBReadUtil.getInstance();
+			 readConn = dbread.getConnection();
+			String readSql = "select " + itemSql + " from " + table.toUpperCase() + " where "
 					+ fpk + " ='" + pkValue + "'";
 			// System.out.println(readSql);
 			stmt = readConn.createStatement();
 			rs = stmt.executeQuery(readSql);
 			obj = new Object[fieldnumber];
+			
 			while (rs.next()) {
 				for (int i = 1; i <= fieldnumber; i++) {
 					obj[i - 1] = rs.getObject(i);
@@ -170,8 +178,7 @@ public class DataProcess {
 	 */
 	private static void writeData(EventInfo eventinfo, Object[] value) {
 		// System.out.println("writeData");
-		LoggerUtil.logger.info("writedata to " + eventinfo.getObjectname()
-				+ ",pk=" + eventinfo.getObjectkey());
+		
 		// 读数连接
 		DBReadUtil dbread = DBReadUtil.getInstance();
 		Connection readConn = null;
@@ -194,6 +201,9 @@ public class DataProcess {
 			writeConn = dbwrite.getConnection();
 			writeConn.getAutoCommit();
 			writeConn.setAutoCommit(false);
+			
+
+			
 		} catch (EASException e) {
 			e.printStackTrace();
 			LoggerUtil.logger.error(e.getMessage());
@@ -202,17 +212,50 @@ public class DataProcess {
 			LoggerUtil.logger.error(e.getMessage());
 		}
 
-		String table = eventinfo.getObjectname();
+		String table1 = eventinfo.getObjectname();
 		String pkValue = eventinfo.getObjectkey();
+		String tabletype =null;
+		String tablenumber =null;
 		String fpk = null;
 		int fieldnumber = 0;
 		String itemSql = null;
 		PropertiesUtil pu = null;
 		PreparedStatement writePs = null;
 		PreparedStatement readPs = null;
+		String table =null;
+		String parenttable =null;
+		String iobjectPK=null;
 		try {
-			pu = new PropertiesUtil("resource/" + table + ".properties");
+			pu = new PropertiesUtil("resource/" + table1.toUpperCase() + ".properties");
 			fpk = pu.getValue(Constants.PK);
+			table=pu.getValue(Constants.TRANSFTABLE);
+			
+			tabletype=pu.getValue(Constants.TABLETYPE);
+			if(tabletype.equals("1")||tabletype.equals("2")){
+				tablenumber=pu.getValue(Constants.TABLENUMBER);
+				parenttable=pu.getValue(Constants.PARENTTABLE);
+				// 获取EAS 用户ID
+				CallableStatement cs;
+				try {
+					cs = writeConn
+					.prepareCall("{ ?=call newbosid(?)}");
+
+
+				cs.registerOutParameter(1, Types.VARCHAR);
+				// Set the value for the IN parameter
+				cs.setString(2, tablenumber);
+
+				// Execute and retrieve the returned value
+				cs.execute();
+				iobjectPK = cs.getString(1);
+				cs.close();
+				
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
 			fieldnumber = Integer.parseInt(pu.getValue(Constants.FIELD_NUMBER));
 			StringBuffer sb = new StringBuffer();
 			for (int i = 0; i < fieldnumber; i++) {
@@ -232,9 +275,228 @@ public class DataProcess {
 			if (i != fieldnumber - 1)
 				sb.append(",");
 		}
-		String insertSql = "insert into " + pu.getValue(Constants.TRANSFTABLE)
+
+		
+		String insertSql = "insert into " + table
 				+ "(" + itemSql + ") values(" + sb.toString() + ")";
+		//-----------------------
+		String inSqltrue = "select fid from " + table.toUpperCase() + " where " + fpk
+				+ "='" + pkValue + "'";
+		if(tabletype.equals("1")||tabletype.equals("2")){
+			inSqltrue= "select fid from " + table.toUpperCase() + " where oldfid='" + pkValue + "'";
+		}
+		
+
+		
+		Statement stmt = null;
+		ResultSet rs1 = null;
+		String biaoji = "0";
+		
+		
+
 		try {
+			 stmt = writeConn.createStatement();
+		     rs1 = stmt.executeQuery(inSqltrue);
+		
+		while (rs1.next()) {
+			biaoji = "1";
+		}
+		} catch (SQLException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		} finally {
+			if (stmt != null) {
+				try {
+					stmt.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+					LoggerUtil.logger.error(e.getMessage());
+				}
+			}
+			if (rs1 != null) {
+				try {
+					rs1.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+					LoggerUtil.logger.error(e.getMessage());
+				}
+			}
+		}
+		
+		
+//---------	子表特殊处理 	
+		String inSqltrue2=null;
+		Statement stmt2 = null;
+		ResultSet rs2 = null;
+		String biaoji2 = "0";
+		String newfid=null;
+		String pfid=null;
+		if(tabletype.equals("2")){
+			for (int i = 0; i < value.length; i++) {
+				String[] column = pu.getValue(Constants.COLUMN + i).split(",");
+		 if ("NSF".equals(column[Constants.TWO])) {
+			          pfid=(String) value[i];
+				}
+				
+				
+			}
+			
+			inSqltrue2= "select fid from " + parenttable.toUpperCase() + " where oldfid='" + pfid + "'";
+		
+
+		try {
+			 stmt2 = writeConn.createStatement();
+		     rs2 = stmt2.executeQuery(inSqltrue2);
+
+		while (rs2.next()) {
+			biaoji2 = "1"; 
+			newfid=(String)rs2.getString("FID");
+		}
+
+		} catch (SQLException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		} finally {
+			if (stmt2 != null) {
+				try {
+					stmt2.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+					LoggerUtil.logger.error(e.getMessage());
+				}
+			}
+			if (rs2 != null) {
+				try {
+					rs2.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+					LoggerUtil.logger.error(e.getMessage());
+				}
+			}
+		}
+		
+		}
+		//---------			
+		
+		try {
+		
+if(tabletype.equals("2")){
+//子表插入的情况	
+	
+if(biaoji2.equals("0")){
+	//如果主表记录没有插入，就先不处理	
+	
+}else{
+	//如果主表有记录，则特殊处理 
+	writePs = writeConn.prepareStatement(insertSql);
+	for (int i = 0; i < value.length; i++) {
+		String[] column = pu.getValue(Constants.COLUMN + i).split(",");
+		if ("C".equals(column[Constants.TWO])) {
+			if (value[i] == null) {
+				writePs.setString(i + 1, null);
+			} else {
+				writePs.setString(i + 1, (String) value[i]);
+			}
+		} else if ("FVC".equals(column[Constants.TWO])) {
+			writePs.setString(i + 1, column[Constants.THREE]);
+		} else if ("N".equals(column[Constants.TWO])) {
+			if (value[i] == null) {
+				writePs.setBigDecimal(i + 1, null);
+			} else {
+				writePs.setBigDecimal(i + 1, (BigDecimal) value[i]);
+			}
+		} else if ("TS".equals(column[Constants.TWO])) {
+			if (value[i] == null) {
+				writePs.setTimestamp(i + 1, null);
+			} else {
+				writePs.setTimestamp(i + 1, ((TIMESTAMP) value[i])
+						.timestampValue());
+			}
+		} else if ("D".equals(column[Constants.TWO])) {
+			if (value[i] == null) {
+				writePs.setDate(i + 1, null);
+			} else {
+				writePs.setDate(i + 1, (Date) value[i]);
+			}
+		} else if ("F71".equals(column[Constants.TWO])) {
+			String str = getF71Value(readConn, column, value[i]);
+			writePs.setString(i + 1, str);
+		} else if ("F72".equals(column[Constants.TWO])) {
+			String str = getF72Value(readConn, writeConn, column,
+					value[i]);
+			writePs.setString(i + 1, str);
+		} else if ("CL".equals(column[Constants.TWO])) {
+			if (value[i] == null) {
+				writePs.setClob(i + 1, (Clob) null);
+
+			} else {
+				writePs.setClob(i + 1, (Clob) value[i]);
+			}
+		}else if ("TS1".equals(column[Constants.TWO])) {
+			if (value[i] == null) {
+				writePs.setTimestamp(i + 1, null);
+			} else {
+				//Date a= new Date(i);
+				
+				//writePs.setTimestamp(i + 1,new Timestamp(new Date().getTime()));
+
+			}
+		}else if ("NF".equals(column[Constants.TWO])) {
+			if (value[i] == null) {
+				writePs.setString(i + 1, (String)iobjectPK);
+				//setTimestamp(i + 1, null);
+			} else {
+				writePs.setString(i + 1, (String)iobjectPK);
+
+			}
+		}
+		else if ("NSF".equals(column[Constants.TWO])) {
+			if (value[i] == null) {
+				writePs.setString(i + 1, (String)newfid);
+				//setTimestamp(i + 1, null);
+			} else {
+				writePs.setString(i + 1, (String)newfid);
+
+			}
+		}
+		
+		
+	}
+	
+	
+	writePs.execute();
+	LoggerUtil.logger.info("writedata to " + eventinfo.getObjectname()
+			+ ",pk=" + eventinfo.getObjectkey());
+	readPs = readConn
+			.prepareStatement("delete from OBJECT_NAME where event_id='"
+					+ eventinfo.getEventid() + "'");
+	readPs.execute();
+
+	readConn.commit();
+	writeConn.commit();
+	
+}	
+	
+	
+	
+	
+	
+	
+}else{
+			
+			//--------------------------------除了子表外的除理
+			
+		if(biaoji.equals("1")){	
+			readPs = readConn
+					.prepareStatement("delete from OBJECT_NAME where event_id='"
+							+ eventinfo.getEventid() + "'");
+			readPs.execute();
+			readConn.commit();
+			LoggerUtil.logger.error("############---------insert  error repeat  in jingying tablename " + table1.toUpperCase()+"---in caiwu tablename"+table.toUpperCase()
+					+ ",pk=" + eventinfo.getObjectkey());
+			
+		}else{
+			
 			writePs = writeConn.prepareStatement(insertSql);
 			for (int i = 0; i < value.length; i++) {
 				String[] column = pu.getValue(Constants.COLUMN + i).split(",");
@@ -288,12 +550,23 @@ public class DataProcess {
 						//writePs.setTimestamp(i + 1,new Timestamp(new Date().getTime()));
 
 					}
+				}else if ("NF".equals(column[Constants.TWO])) {
+					if (value[i] == null) {
+						writePs.setString(i + 1, (String)iobjectPK);
+						//setTimestamp(i + 1, null);
+					} else {
+						writePs.setString(i + 1, (String)iobjectPK);
+
+					}
 				}
 				
 				
 			}
+			
+			
 			writePs.execute();
-
+			LoggerUtil.logger.info("writedata to " + eventinfo.getObjectname()
+					+ ",pk=" + eventinfo.getObjectkey());
 			readPs = readConn
 					.prepareStatement("delete from OBJECT_NAME where event_id='"
 							+ eventinfo.getEventid() + "'");
@@ -301,9 +574,14 @@ public class DataProcess {
 
 			readConn.commit();
 			writeConn.commit();
+
+			
+		}}
+			
 		} catch (SQLException e) {
 			e.printStackTrace();
 			LoggerUtil.logger.error(e.getMessage());
+			
 			if (readConn != null) {
 				try {
 					readConn.rollback();
@@ -559,24 +837,38 @@ public class DataProcess {
 			int fieldnumber = 0;
 			String itemSql = null;
 			PropertiesUtil pu = null;
-			pu = new PropertiesUtil("resource/" + table1 + ".properties");
+			pu = new PropertiesUtil("resource/" + table1.toUpperCase() + ".properties");
 			String table =pu.getValue(Constants.TRANSFTABLE);
+			String tabletype=pu.getValue(Constants.TABLETYPE);
 			
 			fpk = pu.getValue(Constants.PK);
 			fieldnumber = Integer.parseInt(pu.getValue(Constants.FIELD_NUMBER));
 			StringBuffer sb = new StringBuffer();
 			for (int i = 0; i < fieldnumber; i++) {
-				sb
-						.append(
-								pu.getValue(Constants.COLUMN + i).split(",")[Constants.ONE])
-						.append("=?");
+				//
+				if(tabletype.equals("1")||tabletype.equals("2")){
+					if(!pu.getValue(Constants.COLUMN + i).split(",")[Constants.ONE].equals("FID")){
+						if(!pu.getValue(Constants.COLUMN + i).split(",")[Constants.ONE].equals("FParentID")){
+							
+							
+							sb.append(pu.getValue(Constants.COLUMN + i).split(",")[Constants.ONE]).append("=?");	
+						}	
+					}
+						
+				}else{
+				sb.append(pu.getValue(Constants.COLUMN + i).split(",")[Constants.ONE]).append("=?");
+				}
 				if (i != fieldnumber - 1)
 					sb.append(",");
 			}
 			itemSql = sb.toString();
 
-			String deleteSqltrue = "select fid from " + table + " where " + fpk
+			String deleteSqltrue = "select fid from " + table.toUpperCase() + " where " + fpk
 					+ "='" + pkValue + "'";
+			
+			 if(tabletype.equals("1")||tabletype.equals("2")){
+				 deleteSqltrue = "select fid from " + table.toUpperCase() + " where oldfid='" + pkValue + "'";
+			 }
 			Statement stmt = null;
 			ResultSet rs1 = null;
 			String biaoji = "0";
@@ -586,9 +878,13 @@ public class DataProcess {
 			while (rs1.next()) {
 				biaoji = "1";
 			}
-
-			String updateSql = "update " + table + " set " + itemSql
-					+ " where " + fpk + "='" + pkValue + "'";
+			stmt.close();
+			rs1.close();
+if (biaoji.equals("1")){
+			String updateSql = "update " + table.toUpperCase() + " set " + itemSql+ " where " + fpk + "='" + pkValue + "'";
+			 if(tabletype.equals("1")||tabletype.equals("2")){
+				 updateSql = "update " + table.toUpperCase() + " set " + itemSql+ " where oldfid ='" + pkValue + "'";
+			 }
 
 			writePs = writeConn.prepareStatement(updateSql);
 			for (int i = 0; i < value.length; i++) {
@@ -635,6 +931,21 @@ public class DataProcess {
 						writePs.setClob(i + 1, (Clob) value[i]);
 					}
 				}
+				else if ("NF".equals(column[Constants.TWO])) {
+					if (value[i] == null) {
+						
+
+					} else {
+						
+					}
+				}else if ("NSF".equals(column[Constants.TWO])) {
+					if (value[i] == null) {
+						
+
+					} else {
+						
+					}
+				}
 
 			}
 			readPs = readConn
@@ -646,6 +957,15 @@ public class DataProcess {
 
 			writeConn.commit();
 			readConn.commit();
+         }else{
+        	 readPs = readConn
+ 					.prepareStatement("delete from OBJECT_NAME where event_id='"
+ 							+ eventinfo.getEventid() + "'"); 
+        		readPs.execute();
+        		readConn.commit();
+        		LoggerUtil.logger.error("############---------UpdateData not find in jingying tablename " + table1.toUpperCase()+"---in caiwu tablename"+table.toUpperCase()
+						+ ",pk=" + eventinfo.getObjectkey());
+         }
 		} catch (Exception e) {
 			LoggerUtil.logger.error(e.getMessage());
 			e.printStackTrace();
@@ -743,19 +1063,24 @@ public class DataProcess {
 		String table1 = eventinfo.getObjectname();
 		String pkValue = eventinfo.getObjectkey();
 		String table=null;
-
+		String tabletype =null;
 		String fpk = null;
 		PropertiesUtil pu = null;
 		try {
-			pu = new PropertiesUtil("resource/" + table1 + ".properties");
+			pu = new PropertiesUtil("resource/" + table1.toUpperCase() + ".properties");
 			fpk = pu.getValue(Constants.PK);
 			table =pu.getValue(Constants.TRANSFTABLE);
+			tabletype=pu.getValue(Constants.TABLETYPE);
 		} catch (EASException e1) {
 			LoggerUtil.logger.error(e1.getMessage());
 			e1.printStackTrace();
 		}
-		String deleteSqltrue = "select fid from " + table + " where " + fpk
+		String deleteSqltrue = "select fid from " + table.toUpperCase() + " where " + fpk
 				+ "='" + pkValue + "'";
+		if(tabletype.equals("1")||tabletype.equals("2")){
+			deleteSqltrue = "select fid from " + table.toUpperCase() + " where oldfid='" + pkValue + "'";
+		}
+		
 		Statement stmt = null;
 		ResultSet rs1 = null;
 		String biaoji = "0";
@@ -769,12 +1094,34 @@ public class DataProcess {
 		} catch (SQLException e2) {
 			// TODO Auto-generated catch block
 			e2.printStackTrace();
+		}finally {
+			if (stmt != null) {
+				try {
+					stmt.close();
+				} catch (SQLException e) {
+					LoggerUtil.logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+			if (rs1 != null) {
+				try {
+					rs1.close();
+				} catch (SQLException e) {
+					LoggerUtil.logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		
 		}
 
 		if (biaoji.equals("1")) {
 
-			String deleteSql = "delete from " + table + " where " + fpk + "='"
+			String deleteSql = "delete from " + table.toUpperCase() + " where " + fpk + "='"
 					+ pkValue + "'";
+			if(tabletype.equals("1")||tabletype.equals("2")){
+				deleteSql = "delete from " + table.toUpperCase() + " where oldfid='"
+						+ pkValue + "'";
+			}
 			PreparedStatement writePs = null;
 			PreparedStatement readPs = null;
 			try {
@@ -841,6 +1188,69 @@ public class DataProcess {
 					}
 				}
 			}
+		}else{
+
+
+			PreparedStatement readPs = null;
+			try {
+				
+				readPs = readConn
+						.prepareStatement("delete from OBJECT_NAME where event_id='"
+								+ eventinfo.getEventid() + "'");
+				readPs.execute();
+
+				readConn.commit();
+				LoggerUtil.logger.error("############--------- deleteData not find in jingying tablename " + table1.toUpperCase()+"---in caiwu tablename"+table.toUpperCase()
+						+ ",pk=" + eventinfo.getObjectkey());
+				
+			} catch (SQLException e) {
+				LoggerUtil.logger.error(e.getMessage());
+				e.printStackTrace();
+				if (readConn != null) {
+					try {
+						readConn.rollback();
+					} catch (SQLException e1) {
+						LoggerUtil.logger.error(OUTExceptionInfo.ERR002
+								+ e1.getMessage());
+					}
+				}
+				if (writeConn != null) {
+					try {
+						writeConn.rollback();
+					} catch (SQLException e1) {
+						LoggerUtil.logger.error(OUTExceptionInfo.ERR002
+								+ e1.getMessage());
+					}
+				}
+			} finally {
+				
+				if (readPs != null) {
+					try {
+						readPs.close();
+					} catch (SQLException e) {
+						LoggerUtil.logger.error(e.getMessage());
+						e.printStackTrace();
+					}
+				}
+				if (readConn != null) {
+					try {
+						readConn.close();
+					} catch (SQLException e) {
+						LoggerUtil.logger.error(OUTExceptionInfo.ERR270 + " : "
+								+ e.getMessage());
+					}
+				}
+				if (writeConn != null) {
+					try {
+						writeConn.close();
+					} catch (SQLException e) {
+						LoggerUtil.logger.error(OUTExceptionInfo.ERR270 + " : "
+								+ e.getMessage());
+					}
+				}
+			}
+		
+			
 		}
 	}
 }

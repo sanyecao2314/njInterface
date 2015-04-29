@@ -34,6 +34,9 @@ public class Constants {
 	public static final String FIELD_NUMBER = "FIELD_NUMBER";
 	public static final String COLUMN = "COLUMN";
 	public static final String TRANSFTABLE = "TRANSFTABLE";
+	public static final String TABLETYPE = "TABLETYPE";
+	public static final String TABLENUMBER = "TABLENUMBER";
+	public static final String PARENTTABLE = "PARENTTABLE";
 	
 	/** 配置表的信息	 */
 	public static final Integer ZERO = 0;
