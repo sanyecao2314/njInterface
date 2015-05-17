@@ -8,7 +8,9 @@ package com.kingdee.eas.jc.bean;
 public class EventInfo {
 	private String eventid;
 	private String objectkey;
+	/* 事件表存储的的表名 */
 	private String objectname;
+	
 	private String objectfunction;
 	private String eventpriority;
 	private String eventstatus;

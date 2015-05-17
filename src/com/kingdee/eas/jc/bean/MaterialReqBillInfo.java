@@ -1,5 +1,8 @@
 package com.kingdee.eas.jc.bean;
 
+import java.sql.Date;
+import java.util.List;
+
 /**
  * 领料出库单表头
  * @author fans.fan
@@ -12,7 +15,7 @@ public class MaterialReqBillInfo extends BaseInfo{
 	//事务类型
 	String FTransactionTypeID;
 	//业务日期
-	String fbizData;
+	Date fbizdate;
 	//库存组织
 	String FStorageOrgUnitID;
 	//单据状态
@@ -23,6 +26,8 @@ public class MaterialReqBillInfo extends BaseInfo{
 	String FBizTypeID;
 	//航次
 	String voyage;
+	/* 子表信息 */
+	List<MaterialReqBillEntryInfo> lsmaterBillEntryInfos;
 	
 	public String getFnumber() {
 		return fnumber;
@@ -36,11 +41,11 @@ public class MaterialReqBillInfo extends BaseInfo{
 	public void setFTransactionTypeID(String fTransactionTypeID) {
 		FTransactionTypeID = fTransactionTypeID;
 	}
-	public String getFbizData() {
-		return fbizData;
+	public Date getFbizdate() {
+		return fbizdate;
 	}
-	public void setFbizData(String fbizData) {
-		this.fbizData = fbizData;
+	public void setFbizdate(Date fbizdate) {
+		this.fbizdate = fbizdate;
 	}
 	public String getFStorageOrgUnitID() {
 		return FStorageOrgUnitID;
@@ -80,5 +85,13 @@ public class MaterialReqBillInfo extends BaseInfo{
 	public String getTableName(){
 		return "T_IM_MaterialReqBill";
 	}
+	public List<MaterialReqBillEntryInfo> getLsmaterBillEntryInfos() {
+		return lsmaterBillEntryInfos;
+	}
+	public void setLsmaterBillEntryInfos(
+			List<MaterialReqBillEntryInfo> lsmaterBillEntryInfos) {
+		this.lsmaterBillEntryInfos = lsmaterBillEntryInfos;
+	}
+	
 	
 }

@@ -1,6 +1,7 @@
 package com.kingdee.eas.jc.bean;
 
 import java.sql.Date;
+import java.util.List;
 
 
 /**
@@ -30,6 +31,8 @@ public class PurInWarehsBillInfo extends BaseInfo{
 	String FExchangeRate;
 	//航次
 	String Voyage;
+	/* 子表信息 */
+	List<PurInWarehsEntryInfo> lspurInWarehsEntryInfos;
 	
 	public String getFnumber() {
 		return fnumber;
@@ -98,6 +101,13 @@ public class PurInWarehsBillInfo extends BaseInfo{
 	@Override
 	public String getTableName() {
 		return "T_IM_PurInWarehsBill";
+	}
+	public List<PurInWarehsEntryInfo> getLspurInWarehsEntryInfos() {
+		return lspurInWarehsEntryInfos;
+	}
+	public void setLspurInWarehsEntryInfos(
+			List<PurInWarehsEntryInfo> lspurInWarehsEntryInfos) {
+		this.lspurInWarehsEntryInfos = lspurInWarehsEntryInfos;
 	}
 	
 }

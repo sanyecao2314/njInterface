@@ -11,41 +11,53 @@ import java.util.List;
 
 import org.apache.axis.types.Time;
 
+import com.kingdee.eas.jc.bean.EventInfo;
 import com.kingdee.eas.jc.bean.PurInWarehsBillInfo;
 import com.kingdee.eas.jc.bean.PurInWarehsEntryInfo;
 import com.kingdee.eas.jc.exception.EASException;
+import com.kingdee.eas.jc.util.DBTools;
 import com.kingdee.eas.jc.util.DBWriteUtil;
 import com.kingdee.eas.jc.util.LoggerUtil;
 
 public class PurInWarehsBillService {
 
-	public void doProcess(PurInWarehsBillInfo purInWarehsBillInfo,
-			List<PurInWarehsEntryInfo> lspurInWarehsEntryInfos) {
-		Connection writeConn = null;
+	
+	public void doProcess(EventInfo eventinfo){
+		
 		try {
+			PurInWarehsBillInfo purInWarehsBillInfo = readAndTranslate(eventinfo);
+			doInsert(purInWarehsBillInfo);
+			updateMiddleTable();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			DBTools.rollback(getWriteConn());
+			e.printStackTrace();
+		} finally{
+			DBTools.close(getWriteConn());
+		}
+	}
+	
+	private void updateMiddleTable() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private PurInWarehsBillInfo readAndTranslate(EventInfo eventinfo) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private void doInsert(PurInWarehsBillInfo purInWarehsBillInfo) throws Exception {
+		Connection writeConn = null;
 			writeConn = getWriteConn();
 			insertPurInWarehsBillInfo(writeConn, purInWarehsBillInfo);
-			insertLsPurInWarehsEntryInfo(writeConn, purInWarehsBillInfo.getFid(), lspurInWarehsEntryInfos);
+			insertLsPurInWarehsEntryInfo(writeConn, purInWarehsBillInfo.getFid(), purInWarehsBillInfo.getLspurInWarehsEntryInfos());
 			writeConn.commit();
-		} catch (Exception e) {
-			try {
-				writeConn.rollback();
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-			}
-			e.printStackTrace();
-		}finally{
-			try {
-				writeConn.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
 	}
 
 	private void insertPurInWarehsBillInfo(Connection writeConn,
 			PurInWarehsBillInfo purInWarehsBillInfo) throws SQLException {
-		String fid = getUUid(writeConn, purInWarehsBillInfo.getBOStype());
+		String fid = DBTools.getUUid(writeConn, purInWarehsBillInfo.getBOStype());
 		purInWarehsBillInfo.setFid(fid);
 		String insertSql = "insert into T_IM_PurInWarehsBill(fid, FControlUnitID, FCreatorID, FCreateTime, FLastUpdateUserID, FLastUpdateTime, fnumber, FTransactionTypeID, fbizdate, FSupplierID, FStorageOrgUnitID, FBaseStatus, FPaymentTypeID, FCurrencyID, FExchangeRate, fdescription) "
 				+ " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -92,7 +104,7 @@ public class PurInWarehsBillService {
 		PreparedStatement pst = writeConn.prepareStatement(insertSql);
 		int seq = 1;
 		for (PurInWarehsEntryInfo purInWarehsEntryInfo : lspurInWarehsPurInWarehsEntryInfos) {
-			pst.setString(1, getUUid(writeConn, purInWarehsEntryInfo.getBOStype()));
+			pst.setString(1, DBTools.getUUid(writeConn, purInWarehsEntryInfo.getBOStype()));
 			//FControlUnitID
 			pst.setString(2, purInWarehsEntryInfo.getFControlUnitID());
 			//FCreatorID
@@ -133,48 +145,31 @@ public class PurInWarehsBillService {
 		pst.executeBatch();
 	}
 
+	Connection writeConn = null;
 	private Connection getWriteConn() {
-		// 写数连接
-		DBWriteUtil dbwrite = DBWriteUtil.getInstance();
-		Connection writeConn = null;
 		try {
-			writeConn = dbwrite.getConnection();
-			writeConn.getAutoCommit();
-			writeConn.setAutoCommit(false);
-		} catch (EASException e) {
-			e.printStackTrace();
-			LoggerUtil.logger.error(e.getMessage());
+			if (writeConn == null || writeConn.isClosed()) {
+				// 写数连接
+				DBWriteUtil dbwrite = DBWriteUtil.getInstance();
+				try {
+					writeConn = dbwrite.getConnection();
+					writeConn.getAutoCommit();
+					writeConn.setAutoCommit(false);
+				} catch (EASException e) {
+					e.printStackTrace();
+					LoggerUtil.logger.error(e.getMessage());
+				} catch (SQLException e) {
+					e.printStackTrace();
+					LoggerUtil.logger.error(e.getMessage());
+				}
+				
+			}
 		} catch (SQLException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-			LoggerUtil.logger.error(e.getMessage());
 		}
 		
 		return writeConn;
 	}
 	
-	private String getUUid(Connection writeConn,String bostype){
-		// 获取EAS 用户ID
-		CallableStatement cs = null;
-		String iobjectPK = null;
-		try {
-			cs = writeConn.prepareCall("{ ?=call newbosid(?)}");
-		cs.registerOutParameter(1, Types.VARCHAR);
-		// Set the value for the IN parameter
-		cs.setString(2, bostype);
-
-		// Execute and retrieve the returned value
-		cs.execute();
-		iobjectPK = cs.getString(1);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}finally{
-			try {
-				cs.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		return iobjectPK;
-	}
 }

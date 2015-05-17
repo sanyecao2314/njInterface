@@ -9,7 +9,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.List;
 
@@ -18,6 +17,8 @@ import oracle.sql.TIMESTAMP;
 import com.kingdee.eas.jc.bean.EventInfo;
 import com.kingdee.eas.jc.exception.EASException;
 import com.kingdee.eas.jc.exception.OUTExceptionInfo;
+import com.kingdee.eas.jc.services.MaterialReqBillService;
+import com.kingdee.eas.jc.services.PurInWarehsBillService;
 import com.kingdee.eas.jc.util.Constants;
 import com.kingdee.eas.jc.util.DBReadUtil;
 import com.kingdee.eas.jc.util.DBWriteUtil;
@@ -71,13 +72,15 @@ public class DataProcess {
 		// 读取事件表对应的业务表里的数据.
 		Object[] obj = readData(eventinfo);
 		//添加对燃油出入库的处理流程.
-		if (false) {
+		if ("T_COS_BUNKER_STOCKIN".equals(eventinfo.getObjectname().toUpperCase())) {
+			PurInWarehsBillService purInWarehsBillService = new PurInWarehsBillService();
+			purInWarehsBillService.doProcess(eventinfo);
+		} else if("T_COS_BUNKER_CONSUME".equals(eventinfo.getObjectname().toUpperCase())) {
+			MaterialReqBillService materialReqBillService = new MaterialReqBillService();
+			materialReqBillService.doProcess(eventinfo);
+		} else if("T_COS_BUNKER_STOCKIN_DETAIL".equals(eventinfo.getObjectname().toUpperCase()) || "T_COS_BUNKER_CONSUME_DETAIL".equals(eventinfo.getObjectname().toUpperCase())){
 			
-		} else if(false) {
-
-		}else
-		
-		if ("1".equals(eventinfo.getEventstatus())) {
+		} else if ("1".equals(eventinfo.getEventstatus())) {
 			writeData(eventinfo, obj);
 		} else if ("2".equals(eventinfo.getEventstatus())) {
 			updateData(eventinfo, obj);
