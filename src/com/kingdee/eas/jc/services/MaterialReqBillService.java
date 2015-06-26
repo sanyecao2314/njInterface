@@ -1,12 +1,10 @@
 package com.kingdee.eas.jc.services;
 
-import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -14,14 +12,18 @@ import java.util.List;
 import com.kingdee.eas.jc.bean.EventInfo;
 import com.kingdee.eas.jc.bean.MaterialReqBillEntryInfo;
 import com.kingdee.eas.jc.bean.MaterialReqBillInfo;
-import com.kingdee.eas.jc.bean.PurInWarehsBillInfo;
-import com.kingdee.eas.jc.bean.PurInWarehsEntryInfo;
 import com.kingdee.eas.jc.exception.EASException;
 import com.kingdee.eas.jc.util.DBReadUtil;
 import com.kingdee.eas.jc.util.DBTools;
 import com.kingdee.eas.jc.util.DBWriteUtil;
+import com.kingdee.eas.jc.util.DPUtil;
 import com.kingdee.eas.jc.util.LoggerUtil;
 
+/**
+ * 材料出库处理
+ * @author fans.fan
+ *
+ */
 public class MaterialReqBillService {
 	
 	
@@ -29,37 +31,44 @@ public class MaterialReqBillService {
 		try {
 			MaterialReqBillInfo materialReqBillInfo = readAndTranslate(eventinfo);
 			doInsert(materialReqBillInfo);
-			updateMiddleTable();
+			
+			DPUtil.updateMiddleTable(getReadConn(), "", eventinfo.getEventid());
+			DPUtil.updateMiddleTable(getReadConn(), "", eventinfo.getEventid());
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			DBTools.rollback(getWriteConn());
-			e.printStackTrace();
+			LoggerUtil.logger.error("doProcess error.", e);
 		}finally{
 			DBTools.close(getWriteConn());
 		}
 	}
 	
-	private void updateMiddleTable() {
-		// TODO Auto-generated method stub
-		
-	}
 
 	private MaterialReqBillInfo readAndTranslate(EventInfo eventinfo) throws SQLException {
-		String querySql = "";
+		String querySql = "select * from T_COS_BUNKER_CONSUME where fid='" + eventinfo.getEventid() + "'";
 		ResultSet rs = getReadConn().createStatement().executeQuery(querySql);
 
 		MaterialReqBillInfo materReqBillInfo = new MaterialReqBillInfo();
 		while (rs.next()) {
-			String str = rs.getString("");
+			String str = rs.getString("FID");
+			materReqBillInfo.setFnumber(str);
+			materReqBillInfo.setFbizdate(rs.getDate("BIZ_DATE"));
+			str = rs.getString("STOCK_ORG");
+			materReqBillInfo.setFStorageOrgUnitID(DPUtil.getWarehouseFidByfnumber(readConn, str, writeConn));
+			materReqBillInfo.setFDescription(rs.getString("VOY_NO"));
+			str = rs.getString("COST_CENTER");
+			materReqBillInfo.setFCostCenterOrgUnitID(DPUtil.getCostCenterFid(getReadConn(), str, getWriteConn()));
 		}
 
-		String queryEntrySql = "";
+		String queryEntrySql = "select * from T_COS_BUNKER_CONSUME_DETAIL where fid='" + eventinfo.getEventid() + "'";
 		rs = getReadConn().createStatement().executeQuery(querySql);
 		List<MaterialReqBillEntryInfo> lspurEntryInfos = new ArrayList<MaterialReqBillEntryInfo>();
 		while (rs.next()) {
 			MaterialReqBillEntryInfo materialReqBillEntryInfo = new MaterialReqBillEntryInfo();
 
-			String str = rs.getString("");
+			String str = rs.getString("CODE");
+			materialReqBillEntryInfo.setFMaterialID(DPUtil.getMaterialFid(str, getWriteConn()));
+			materialReqBillEntryInfo.setFQty(rs.getDouble("QUANTITY"));
+			materialReqBillEntryInfo.setFAssistQty(rs.getDouble("BASE_QUANTITY"));
 
 			lspurEntryInfos.add(materialReqBillEntryInfo);
 		}
@@ -111,7 +120,7 @@ public class MaterialReqBillService {
 		//FBizTypeID;
 		pst.setString(13, materialReqBillInfo.getFBizTypeID());
 		//fdescription
-		pst.setString(14, materialReqBillInfo.getVoyage());
+		pst.setString(14, materialReqBillInfo.getFDescription());
 		pst.execute();
 	}
 
@@ -175,8 +184,7 @@ public class MaterialReqBillService {
 				
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LoggerUtil.logger.error("getWriteConn error.", e);
 		}
 		
 		return writeConn;

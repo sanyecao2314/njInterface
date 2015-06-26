@@ -12,20 +12,21 @@ public class MaterialReqBillInfo extends BaseInfo{
 
 	//单据编号
 	String fnumber;
-	//事务类型
-	String FTransactionTypeID;
+	//事务类型  普通领料出库
+	String FTransactionTypeID = "1aa51711-0f60-455a-a3c2-43b86155098dB008DCA7";
 	//业务日期
 	Date fbizdate;
 	//库存组织
 	String FStorageOrgUnitID;
-	//单据状态
-	String FBaseStatus;
+	//单据状态 保存
+	String FBaseStatus = "1";
 	//成本中心
 	String FCostCenterOrgUnitID;
-	//业务类型
-	String FBizTypeID;
+	//业务类型 普通领料
+	String FBizTypeID = "0rSFjAEeEADgAAyMwKgSQiQHQ1w=";
 	//航次
-	String voyage;
+	String FDescription;
+	
 	/* 子表信息 */
 	List<MaterialReqBillEntryInfo> lsmaterBillEntryInfos;
 	
@@ -71,13 +72,12 @@ public class MaterialReqBillInfo extends BaseInfo{
 	public void setFBizTypeID(String fBizTypeID) {
 		FBizTypeID = fBizTypeID;
 	}
-	public String getVoyage() {
-		return voyage;
+	public String getFDescription() {
+		return FDescription;
 	}
-	public void setVoyage(String voyage) {
-		this.voyage = voyage;
+	public void setFDescription(String fDescription) {
+		FDescription = fDescription;
 	}
-	
 	public String getBOStype(){
 		return "500AB75E";
 	}

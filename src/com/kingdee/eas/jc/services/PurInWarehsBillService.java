@@ -1,18 +1,14 @@
 package com.kingdee.eas.jc.services;
 
-import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-
-import org.apache.axis.types.Time;
 
 import com.kingdee.eas.jc.bean.EventInfo;
 import com.kingdee.eas.jc.bean.PurInWarehsBillInfo;
@@ -24,6 +20,11 @@ import com.kingdee.eas.jc.util.DBWriteUtil;
 import com.kingdee.eas.jc.util.DPUtil;
 import com.kingdee.eas.jc.util.LoggerUtil;
 
+/**
+ * 采购入库处理
+ * @author fans.fan
+ *
+ */
 public class PurInWarehsBillService {
 
 	
@@ -32,7 +33,8 @@ public class PurInWarehsBillService {
 		try {
 			PurInWarehsBillInfo purInWarehsBillInfo = readAndTranslate(eventinfo);
 			doInsert(purInWarehsBillInfo);
-			updateMiddleTable();
+			DPUtil.updateMiddleTable(getReadConn(), "T_COS_BUNKER_STOCKIN", eventinfo.getEventid());
+			DPUtil.updateMiddleTable(getReadConn(), "T_COS_BUNKER_STOCKIN_DETAIL", eventinfo.getEventid());
 		} catch (Exception e) {
 			DBTools.rollback(getWriteConn());
 			e.printStackTrace();
@@ -202,11 +204,6 @@ public class PurInWarehsBillService {
 		pst.executeBatch();
 	}
 
-	private void updateMiddleTable() {
-		// TODO Auto-generated method stub
-		
-	}
-	
 	Connection writeConn = null;
 	private Connection getWriteConn() {
 		try {

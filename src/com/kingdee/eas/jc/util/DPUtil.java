@@ -5,7 +5,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import com.mchange.v2.log.LogUtils;
 
+
+/**
+ * @author fans.fan
+ *
+ */
 public class DPUtil {
 
 	/**
@@ -43,7 +49,20 @@ public class DPUtil {
 	 */
 	public static String getWarehouseFid(Connection readConn ,String fid, Connection writeConn){
 		String fnumberQuery = "select fnumber from T_COS_Vessel where fid = ?";
-		String fidQuery = "select fid from T_BD_Currency where fnumber= ?";
+		String fidQuery = "select fid from T_DB_WAREHOUSE where fnumber= ?";
+		return getFid(readConn, fid, writeConn, fnumberQuery, fidQuery); 
+	}
+
+	/**
+	 * 获得成本中心主键Fid
+	 * @param readConn
+	 * @param fid 经营系统船舶Fid.
+	 * @param writeConn
+	 * @return
+	 */
+	public static String getCostCenterFid(Connection readConn, String fid, Connection writeConn){
+		String fnumberQuery = "select fnumber from T_COS_Vessel where fid = ?";
+		String fidQuery = "select fid from T_ORG_CostCenter where fnumber= ?";
 		return getFid(readConn, fid, writeConn, fnumberQuery, fidQuery); 
 	}
 	
@@ -90,8 +109,24 @@ public class DPUtil {
 	 * @return
 	 */
 	public static String getMaterialFid(String fnumber, Connection writeConn){
-		String res = "";
 		String fidQuery = "select fid from t_bd_material where fnumber = ?";
+		return getFidByFnumber(fnumber, writeConn, fidQuery);
+	}
+	
+	/**
+	 * 根据船舶编码获取仓库Fid
+	 * @param readConn
+	 * @param fnumber 船舶编码 
+	 * @param writeConn
+	 * @return
+	 */
+	public static String getWarehouseFidByfnumber(Connection readConn, String fnumber, Connection writeConn) {
+		String fidQuery = "select fid from T_DB_WAREHOUSE where fnumber= ?";
+		return getFidByFnumber(fnumber, writeConn, fidQuery);
+	}
+	
+	private static String getFidByFnumber(String fnumber, Connection writeConn, String fidQuery){
+		String res = "";
 		PreparedStatement writePs = null;
 		ResultSet writeRS = null;
 		try {
@@ -102,11 +137,25 @@ public class DPUtil {
 					res = writeRS.getString("fid");
 				}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			LoggerUtil.logger.error("getFidByFnumber error.", e);
 		}finally{
 			close(null, writePs, null, writeRS);
 		}
 		return res;
+	}
+	
+	public static void updateMiddleTable(Connection readConn, String tableName, String fid) {
+		String deleteSql = "delete from  " + tableName + "  where fid = ?";
+		PreparedStatement ps = null;
+		try {
+			ps = readConn.prepareStatement(deleteSql);
+			ps.setString(1, fid);
+			ps.execute();
+		} catch (SQLException e) {
+			LoggerUtil.logger.error("update middleTable error.", e);
+		}finally{
+			close(ps, null, null, null);
+		}
 	}
 
 	private static void close(PreparedStatement readPs, PreparedStatement writePs, ResultSet readRs, ResultSet writeRS) {
@@ -140,4 +189,5 @@ public class DPUtil {
 			}
 		}
 	}
+
 }
