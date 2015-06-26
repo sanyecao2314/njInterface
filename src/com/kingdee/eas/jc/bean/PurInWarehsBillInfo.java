@@ -13,24 +13,24 @@ public class PurInWarehsBillInfo extends BaseInfo{
 
 	//单据编号
 	String fnumber;
-	//事务类型
-	String FTransactionTypeID;
+	//事务类型 手工采购入库
+	String FTransactionTypeID = "0F/edAELEADgABkkwKgSKbAI3Kc=";
 	//业务日期
 	Date fbizdate;
 	//供应商
 	String FSupplierID;
 	//库存组织
 	String FStorageOrgUnitID;
-	//单据状态
-	String FBaseStatus;
-	//付款方式
-	String FPaymentTypeID;
+	//单据状态 1代表保存
+	String FBaseStatus = "1";
+	//付款方式 赊购
+	String FPaymentTypeID = "2fa35444-5a23-43fb-99ee-6d4fa5f260da6BCA0AB5";
 	//币别
 	String FCurrencyID;
 	//汇率
 	String FExchangeRate;
 	//航次
-	String Voyage;
+	String FDescription;
 	/* 子表信息 */
 	List<PurInWarehsEntryInfo> lspurInWarehsEntryInfos;
 	
@@ -88,11 +88,12 @@ public class PurInWarehsBillInfo extends BaseInfo{
 	public void setFExchangeRate(String fExchangeRate) {
 		FExchangeRate = fExchangeRate;
 	}
-	public String getVoyage() {
-		return Voyage;
+
+	public String getFDescription() {
+		return FDescription;
 	}
-	public void setVoyage(String voyage) {
-		Voyage = voyage;
+	public void setFDescription(String fDescription) {
+		FDescription = fDescription;
 	}
 	@Override
 	public String getBOStype() {

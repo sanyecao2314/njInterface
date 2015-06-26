@@ -2,10 +2,13 @@ package com.kingdee.eas.jc.services;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -15,8 +18,10 @@ import com.kingdee.eas.jc.bean.EventInfo;
 import com.kingdee.eas.jc.bean.PurInWarehsBillInfo;
 import com.kingdee.eas.jc.bean.PurInWarehsEntryInfo;
 import com.kingdee.eas.jc.exception.EASException;
+import com.kingdee.eas.jc.util.DBReadUtil;
 import com.kingdee.eas.jc.util.DBTools;
 import com.kingdee.eas.jc.util.DBWriteUtil;
+import com.kingdee.eas.jc.util.DPUtil;
 import com.kingdee.eas.jc.util.LoggerUtil;
 
 public class PurInWarehsBillService {
@@ -29,7 +34,6 @@ public class PurInWarehsBillService {
 			doInsert(purInWarehsBillInfo);
 			updateMiddleTable();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			DBTools.rollback(getWriteConn());
 			e.printStackTrace();
 		} finally{
@@ -37,14 +41,67 @@ public class PurInWarehsBillService {
 		}
 	}
 	
-	private void updateMiddleTable() {
-		// TODO Auto-generated method stub
+	private PurInWarehsBillInfo readAndTranslate(EventInfo eventinfo) throws SQLException {
+		String querySql = "select * from T_COS_BUNKER_STOCKIN where fid='" + eventinfo.getEventid() + "'";
+		ResultSet rs = getReadConn().createStatement().executeQuery(querySql);
 		
-	}
+		PurInWarehsBillInfo purInWarehsBillInfo = new PurInWarehsBillInfo();
+		while (rs.next()) {
+			//单据编号
+			String str = rs.getString("FID");
+			purInWarehsBillInfo.setFnumber(str);
+//			//事务类型
+//			String str = rs.getString("TRANSACTION_TYPE");
+			//燃油供应商
+			str = rs.getString("SUPPLIERS_ID");
+			String supplierID = DPUtil.getSupplierID(getReadConn(), str, getWriteConn());
+			purInWarehsBillInfo.setFSupplierID(supplierID);
+			//业务日期
+			Timestamp timestamp = rs.getTimestamp("BIZ_DATE");
+			Date date = new Date(timestamp.getYear(), timestamp.getMonth(), timestamp.getDate());
+			purInWarehsBillInfo.setFbizdate(date);
+//			//库存组织
+//			String str = rs.getString("STOCK_ORG");
+//			//部门
+//			String str = rs.getString("DEPARTMENT");
+//			//单据状态
+//			String str = rs.getString("BIZ_STATUS");
+			//币种 CURRENCY_ID
+			str = rs.getString("CURRENCY_ID");
+			purInWarehsBillInfo.setFCurrencyID(DPUtil.getCurrencyFid(getReadConn(), str, getWriteConn()));
+//			//成本中心
+//			String str = rs.getString("COST_CENTER");
+//			//业务类型
+//			String str = rs.getString("FID");
+			//摘要
+			//源单据类型
+			//航次
+			str = rs.getString("VOY_NO");
+			purInWarehsBillInfo.setFDescription(str);
 
-	private PurInWarehsBillInfo readAndTranslate(EventInfo eventinfo) {
-		// TODO Auto-generated method stub
-		return null;
+		}
+		
+		String queryEntrySql =  "select * from T_COS_BUNKER_STOCKIN_DETAIL where fid='" + eventinfo.getEventid() + "'";
+		rs = getReadConn().createStatement().executeQuery(querySql);
+		List<PurInWarehsEntryInfo> lspurEntryInfos = new ArrayList<PurInWarehsEntryInfo>();
+		while (rs.next()) {
+			PurInWarehsEntryInfo purInWarehsEntryInfo = new PurInWarehsEntryInfo();
+			
+			String str = rs.getString("CODE");
+			purInWarehsEntryInfo.setFMaterialID(DPUtil.getMaterialFid(str, getWriteConn()));
+			purInWarehsEntryInfo.setFQty(rs.getDouble("QUANTITY"));
+			purInWarehsEntryInfo.setFBaseQty(rs.getString("BASE_QUANTITY"));
+			str = rs.getString("WAREHOUSE");
+			purInWarehsEntryInfo.setWarehouse(DPUtil.getWarehouseFid(getReadConn(), str, getWriteConn()));
+			purInWarehsEntryInfo.setFPrice(rs.getDouble("PRICE"));
+			purInWarehsEntryInfo.setFamount(rs.getDouble("AMOUNT"));
+			
+			lspurEntryInfos.add(purInWarehsEntryInfo);
+		}
+		
+		purInWarehsBillInfo.setLspurInWarehsEntryInfos(lspurEntryInfos);
+		
+		return purInWarehsBillInfo;
 	}
 
 	private void doInsert(PurInWarehsBillInfo purInWarehsBillInfo) throws Exception {
@@ -93,7 +150,7 @@ public class PurInWarehsBillService {
 		//FExchangeRate
 		pst.setString(15, purInWarehsBillInfo.getFExchangeRate());
 		//fdescription
-		pst.setString(16, purInWarehsBillInfo.getVoyage());
+		pst.setString(16, purInWarehsBillInfo.getFDescription());
 		pst.execute();
 	}
 
@@ -145,6 +202,11 @@ public class PurInWarehsBillService {
 		pst.executeBatch();
 	}
 
+	private void updateMiddleTable() {
+		// TODO Auto-generated method stub
+		
+	}
+	
 	Connection writeConn = null;
 	private Connection getWriteConn() {
 		try {
@@ -165,11 +227,27 @@ public class PurInWarehsBillService {
 				
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 		return writeConn;
+	}
+	
+	Connection readConn = null;
+	private Connection getReadConn(){
+		try {
+			if (readConn == null || readConn.isClosed()) {
+				DBReadUtil dbread = DBReadUtil.getInstance();
+				readConn = dbread.getConnection();
+				readConn.getAutoCommit();
+				readConn.setAutoCommit(false);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			LoggerUtil.logger.error(e.getMessage());
+		}
+		
+		return readConn;
 	}
 	
 }

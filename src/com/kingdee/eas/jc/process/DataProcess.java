@@ -1,5 +1,6 @@
 package com.kingdee.eas.jc.process;
 
+import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Clob;
@@ -78,8 +79,11 @@ public class DataProcess {
 		} else if("T_COS_BUNKER_CONSUME".equals(eventinfo.getObjectname().toUpperCase())) {
 			MaterialReqBillService materialReqBillService = new MaterialReqBillService();
 			materialReqBillService.doProcess(eventinfo);
-		} else if("T_COS_BUNKER_STOCKIN_DETAIL".equals(eventinfo.getObjectname().toUpperCase()) || "T_COS_BUNKER_CONSUME_DETAIL".equals(eventinfo.getObjectname().toUpperCase())){
-			
+		} 
+		
+		/**
+	    else if("T_COS_BUNKER_STOCKIN_DETAIL".equals(eventinfo.getObjectname().toUpperCase()) || "T_COS_BUNKER_CONSUME_DETAIL".equals(eventinfo.getObjectname().toUpperCase())){
+			//子表的直接不管.主表内容处理时,会自动处理子表内容.
 		} else if ("1".equals(eventinfo.getEventstatus())) {
 			writeData(eventinfo, obj);
 		} else if ("2".equals(eventinfo.getEventstatus())) {
@@ -87,6 +91,7 @@ public class DataProcess {
 		} else if ("3".equals(eventinfo.getEventstatus())) {
 			deleteData(eventinfo, obj);
 		}
+		 */
 	}
 
 	/**

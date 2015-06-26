@@ -4,7 +4,7 @@
 read_driverClassName=oracle.jdbc.driver.OracleDriver
 #validationQuery=SELECT 1
 #read_jdbc_url=jdbc:oracle:thin:@10.25.254.213:1521:jygl1
-read_jdbc_url=jdbc:oracle:thin:@10.25.254.60:1521:jygl1
+read_jdbc_url=jdbc:oracle:thin:@10.25.254.81:1521:eastest
 read_jdbc_username=njtcuser
 read_jdbc_password=njtcuser
 

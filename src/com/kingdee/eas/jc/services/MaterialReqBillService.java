@@ -3,9 +3,11 @@ package com.kingdee.eas.jc.services;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -15,6 +17,7 @@ import com.kingdee.eas.jc.bean.MaterialReqBillInfo;
 import com.kingdee.eas.jc.bean.PurInWarehsBillInfo;
 import com.kingdee.eas.jc.bean.PurInWarehsEntryInfo;
 import com.kingdee.eas.jc.exception.EASException;
+import com.kingdee.eas.jc.util.DBReadUtil;
 import com.kingdee.eas.jc.util.DBTools;
 import com.kingdee.eas.jc.util.DBWriteUtil;
 import com.kingdee.eas.jc.util.LoggerUtil;
@@ -41,9 +44,29 @@ public class MaterialReqBillService {
 		
 	}
 
-	private MaterialReqBillInfo readAndTranslate(EventInfo eventinfo) {
-		// TODO Auto-generated method stub
-		return null;
+	private MaterialReqBillInfo readAndTranslate(EventInfo eventinfo) throws SQLException {
+		String querySql = "";
+		ResultSet rs = getReadConn().createStatement().executeQuery(querySql);
+
+		MaterialReqBillInfo materReqBillInfo = new MaterialReqBillInfo();
+		while (rs.next()) {
+			String str = rs.getString("");
+		}
+
+		String queryEntrySql = "";
+		rs = getReadConn().createStatement().executeQuery(querySql);
+		List<MaterialReqBillEntryInfo> lspurEntryInfos = new ArrayList<MaterialReqBillEntryInfo>();
+		while (rs.next()) {
+			MaterialReqBillEntryInfo materialReqBillEntryInfo = new MaterialReqBillEntryInfo();
+
+			String str = rs.getString("");
+
+			lspurEntryInfos.add(materialReqBillEntryInfo);
+		}
+
+		materReqBillInfo.setLsmaterBillEntryInfos(lspurEntryInfos);
+
+		return materReqBillInfo;
 	}
 
 	private void doInsert(MaterialReqBillInfo materialReqBillInfo) throws Exception {
@@ -157,6 +180,23 @@ public class MaterialReqBillService {
 		}
 		
 		return writeConn;
+	}
+	
+	Connection readConn = null;
+	private Connection getReadConn(){
+		try {
+			if (readConn == null || readConn.isClosed()) {
+				DBReadUtil dbread = DBReadUtil.getInstance();
+				readConn = dbread.getConnection();
+				readConn.getAutoCommit();
+				readConn.setAutoCommit(false);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			LoggerUtil.logger.error(e.getMessage());
+		}
+		
+		return readConn;
 	}
 	
 	

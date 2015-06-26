@@ -1,1 +1,5 @@
 数据库地址是10.25.254.81 用户名/密码、实例都是eastest
+
+
+经营库：10.25.254.81  SID:eastest   username:njtcuser  pwd:njtcuser
+报文：10.25.254.127   SID:njtcmail    username:njtcmail  pwd:njtcmail
