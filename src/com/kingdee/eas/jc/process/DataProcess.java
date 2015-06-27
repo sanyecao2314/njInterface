@@ -71,7 +71,7 @@ public class DataProcess {
 			return;
 
 		// 读取事件表对应的业务表里的数据.
-		Object[] obj = readData(eventinfo);
+//		Object[] obj = readData(eventinfo);
 		//添加对燃油出入库的处理流程.
 		if ("T_COS_BUNKER_STOCKIN".equals(eventinfo.getObjectname().toUpperCase())) {
 			PurInWarehsBillService purInWarehsBillService = new PurInWarehsBillService();

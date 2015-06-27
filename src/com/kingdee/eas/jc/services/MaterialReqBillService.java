@@ -32,8 +32,8 @@ public class MaterialReqBillService {
 			MaterialReqBillInfo materialReqBillInfo = readAndTranslate(eventinfo);
 			doInsert(materialReqBillInfo);
 			
-			DPUtil.updateMiddleTable(getReadConn(), "", eventinfo.getEventid());
-			DPUtil.updateMiddleTable(getReadConn(), "", eventinfo.getEventid());
+			DPUtil.updateMiddleTable(getReadConn(), "", eventinfo.getObjectkey());
+			DPUtil.updateMiddleTable(getReadConn(), "", eventinfo.getObjectkey());
 		} catch (Exception e) {
 			DBTools.rollback(getWriteConn());
 			LoggerUtil.logger.error("doProcess error.", e);
@@ -44,7 +44,7 @@ public class MaterialReqBillService {
 	
 
 	private MaterialReqBillInfo readAndTranslate(EventInfo eventinfo) throws SQLException {
-		String querySql = "select * from T_COS_BUNKER_CONSUME where fid='" + eventinfo.getEventid() + "'";
+		String querySql = "select * from T_COS_BUNKER_CONSUME where fid='" + eventinfo.getObjectkey() + "'";
 		ResultSet rs = getReadConn().createStatement().executeQuery(querySql);
 
 		MaterialReqBillInfo materReqBillInfo = new MaterialReqBillInfo();
@@ -53,24 +53,29 @@ public class MaterialReqBillService {
 			materReqBillInfo.setFnumber(str);
 			materReqBillInfo.setFbizdate(rs.getDate("BIZ_DATE"));
 			str = rs.getString("STOCK_ORG");
-			materReqBillInfo.setFStorageOrgUnitID(DPUtil.getWarehouseFidByfnumber(readConn, str, writeConn));
+			materReqBillInfo.setFStorageOrgUnitID(DPUtil.getWarehouseFidByfnumber(getReadConn(), str, getWriteConn()));
 			materReqBillInfo.setFDescription(rs.getString("VOY_NO"));
 			str = rs.getString("COST_CENTER");
 			materReqBillInfo.setFCostCenterOrgUnitID(DPUtil.getCostCenterFid(getReadConn(), str, getWriteConn()));
 		}
 
-		String queryEntrySql = "select * from T_COS_BUNKER_CONSUME_DETAIL where fid='" + eventinfo.getEventid() + "'";
-		rs = getReadConn().createStatement().executeQuery(querySql);
+		String queryEntrySql = "select * from T_COS_BUNKER_CONSUME_DETAIL where fid='" + eventinfo.getObjectkey() + "'";
+		rs = getReadConn().createStatement().executeQuery(queryEntrySql);
 		List<MaterialReqBillEntryInfo> lspurEntryInfos = new ArrayList<MaterialReqBillEntryInfo>();
 		while (rs.next()) {
-			MaterialReqBillEntryInfo materialReqBillEntryInfo = new MaterialReqBillEntryInfo();
-
-			String str = rs.getString("CODE");
-			materialReqBillEntryInfo.setFMaterialID(DPUtil.getMaterialFid(str, getWriteConn()));
-			materialReqBillEntryInfo.setFQty(rs.getDouble("QUANTITY"));
-			materialReqBillEntryInfo.setFAssistQty(rs.getDouble("BASE_QUANTITY"));
-
-			lspurEntryInfos.add(materialReqBillEntryInfo);
+			try {
+				MaterialReqBillEntryInfo materialReqBillEntryInfo = new MaterialReqBillEntryInfo();
+				
+				String str = rs.getString("CODE");
+				materialReqBillEntryInfo.setFMaterialID(DPUtil.getMaterialFid(str, getWriteConn()));
+				materialReqBillEntryInfo.setFQty(rs.getDouble("QUANTITY"));
+				materialReqBillEntryInfo.setFAssistQty(rs.getDouble("BASE_QUANTITY"));
+				
+				lspurEntryInfos.add(materialReqBillEntryInfo);
+			} catch (Exception e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}
 		}
 
 		materReqBillInfo.setLsmaterBillEntryInfos(lspurEntryInfos);
@@ -126,38 +131,38 @@ public class MaterialReqBillService {
 
 	private void insertLsMaterialReqBillEntryInfo(Connection writeConn, String fparentid,
 			List<MaterialReqBillEntryInfo> lsmaterBillEntryInfos) throws Exception {
-		String insertSql = "insert into T_IM_MaterialReqBillEntry(fid, FControlUnitID, FCreatorID, FCreateTime, FLastUpdateUserID, FLastUpdateTime, FParentID, fseq, FMaterialID, FUnitID, FQty, FAssistUnitID, FAssistQty, FWarehouseID) " 
-				+" values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		String insertSql = "insert into T_IM_MaterialReqBillEntry(fid, FParentID, fseq, FMaterialID, FUnitID, FQty, FAssistUnitID, FAssistQty, FWarehouseID) " 
+				+" values(?,?,?,?,?,?,?,?,?)";
 		PreparedStatement pst = writeConn.prepareStatement(insertSql);
 		int seq = 1;
 		for (MaterialReqBillEntryInfo materialReqBillEntryInfo : lsmaterBillEntryInfos) {
 			pst.setString(1, DBTools.getUUid(writeConn, materialReqBillEntryInfo.getBOStype()));
-			//FControlUnitID
-			pst.setString(2, materialReqBillEntryInfo.getFControlUnitID());
-			//FCreatorID
-			pst.setString(3, materialReqBillEntryInfo.getFCreatorID());
-			//FCreateTime
-			pst.setTimestamp(4, new Timestamp(Calendar.getInstance().getTimeInMillis()));
-			//FLastUpdateUserID
-			pst.setString(5, materialReqBillEntryInfo.getFLastUpdateUserID());
-			//FLastUpdateTime
-			pst.setTimestamp(6, new Timestamp(Calendar.getInstance().getTimeInMillis()));
+//			//FControlUnitID
+//			pst.setString(2, materialReqBillEntryInfo.getFControlUnitID());
+//			//FCreatorID
+//			pst.setString(3, materialReqBillEntryInfo.getFCreatorID());
+//			//FCreateTime
+//			pst.setTimestamp(4, new Timestamp(Calendar.getInstance().getTimeInMillis()));
+//			//FLastUpdateUserID
+//			pst.setString(5, materialReqBillEntryInfo.getFLastUpdateUserID());
+//			//FLastUpdateTime
+//			pst.setTimestamp(6, new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			//FParentID
-			pst.setString(7, fparentid);
+			pst.setString(2, fparentid);
 			//fseq
-			pst.setInt(8, seq++);
+			pst.setInt(3, seq++);
 			//FMaterialID
-			pst.setString(9, materialReqBillEntryInfo.getFMaterialID());
+			pst.setString(4, materialReqBillEntryInfo.getFMaterialID());
 			//FUnitID
-			pst.setString(10, materialReqBillEntryInfo.getFUnitID());
+			pst.setString(5, materialReqBillEntryInfo.getFUnitID());
 			//Fqty
-			pst.setDouble(11, materialReqBillEntryInfo.getFQty());
+			pst.setDouble(6, materialReqBillEntryInfo.getFQty());
 			//FAssistUnitID
-			pst.setString(12, materialReqBillEntryInfo.getFAssistUnitID());
+			pst.setString(7, materialReqBillEntryInfo.getFAssistUnitID());
 			//FAssistQty;
-			pst.setDouble(13, materialReqBillEntryInfo.getFAssistQty());
+			pst.setDouble(8, materialReqBillEntryInfo.getFAssistQty());
 			//FWarehouseID
-			pst.setString(14, materialReqBillEntryInfo.getFWarehouseID());
+			pst.setString(9, materialReqBillEntryInfo.getFWarehouseID());
 			
 			pst.addBatch(); 
 		}

@@ -33,8 +33,8 @@ public class PurInWarehsBillService {
 		try {
 			PurInWarehsBillInfo purInWarehsBillInfo = readAndTranslate(eventinfo);
 			doInsert(purInWarehsBillInfo);
-			DPUtil.updateMiddleTable(getReadConn(), "T_COS_BUNKER_STOCKIN", eventinfo.getEventid());
-			DPUtil.updateMiddleTable(getReadConn(), "T_COS_BUNKER_STOCKIN_DETAIL", eventinfo.getEventid());
+			DPUtil.updateMiddleTable(getReadConn(), "T_COS_BUNKER_STOCKIN", eventinfo.getObjectkey());
+			DPUtil.updateMiddleTable(getReadConn(), "T_COS_BUNKER_STOCKIN_DETAIL", eventinfo.getObjectkey());
 		} catch (Exception e) {
 			DBTools.rollback(getWriteConn());
 			e.printStackTrace();
@@ -44,7 +44,7 @@ public class PurInWarehsBillService {
 	}
 	
 	private PurInWarehsBillInfo readAndTranslate(EventInfo eventinfo) throws SQLException {
-		String querySql = "select * from T_COS_BUNKER_STOCKIN where fid='" + eventinfo.getEventid() + "'";
+		String querySql = "select * from T_COS_BUNKER_STOCKIN where fid='" + eventinfo.getObjectkey() + "'";
 		ResultSet rs = getReadConn().createStatement().executeQuery(querySql);
 		
 		PurInWarehsBillInfo purInWarehsBillInfo = new PurInWarehsBillInfo();
@@ -83,8 +83,8 @@ public class PurInWarehsBillService {
 
 		}
 		
-		String queryEntrySql =  "select * from T_COS_BUNKER_STOCKIN_DETAIL where fid='" + eventinfo.getEventid() + "'";
-		rs = getReadConn().createStatement().executeQuery(querySql);
+		String queryEntrySql =  "select * from T_COS_BUNKER_STOCKIN_DETAIL where fid='" + eventinfo.getObjectkey() + "'";
+		rs = getReadConn().createStatement().executeQuery(queryEntrySql);
 		List<PurInWarehsEntryInfo> lspurEntryInfos = new ArrayList<PurInWarehsEntryInfo>();
 		while (rs.next()) {
 			PurInWarehsEntryInfo purInWarehsEntryInfo = new PurInWarehsEntryInfo();
@@ -158,46 +158,46 @@ public class PurInWarehsBillService {
 
 	private void insertLsPurInWarehsEntryInfo(Connection writeConn,String fparentid,
 			List<PurInWarehsEntryInfo> lspurInWarehsPurInWarehsEntryInfos) throws Exception {
-		String insertSql = "insert into T_IM_PurInWarehsBill(fid, FControlUnitID, FCreatorID, FCreateTime, FLastUpdateUserID, FLastUpdateTime, FParentID, fseq, FMaterialID, FUnitID, FQty, FbaseUnitID, FBaseQty, FWarehouseID, FPrice, Famount, FTaxRate, FPurchaseOrgUnitID) "
-				+ " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		String insertSql = "insert into T_IM_PurInWarehsBill(fid, FParentID, fseq, FMaterialID, FUnitID, FQty, FbaseUnitID, FBaseQty, FWarehouseID, FPrice, Famount, FTaxRate, FPurchaseOrgUnitID) "
+				+ " values(?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		PreparedStatement pst = writeConn.prepareStatement(insertSql);
 		int seq = 1;
 		for (PurInWarehsEntryInfo purInWarehsEntryInfo : lspurInWarehsPurInWarehsEntryInfos) {
 			pst.setString(1, DBTools.getUUid(writeConn, purInWarehsEntryInfo.getBOStype()));
-			//FControlUnitID
-			pst.setString(2, purInWarehsEntryInfo.getFControlUnitID());
-			//FCreatorID
-			pst.setString(3, purInWarehsEntryInfo.getFCreatorID());
-			//FCreateTime
-			pst.setTimestamp(4, new Timestamp(Calendar.getInstance().getTimeInMillis()));
-			//FLastUpdateUserID
-			pst.setString(5, purInWarehsEntryInfo.getFLastUpdateUserID());
-			//FLastUpdateTime
-			pst.setTimestamp(6, new Timestamp(Calendar.getInstance().getTimeInMillis()));
+//			//FControlUnitID
+//			pst.setString(2, purInWarehsEntryInfo.getFControlUnitID());
+//			//FCreatorID
+//			pst.setString(3, purInWarehsEntryInfo.getFCreatorID());
+//			//FCreateTime
+//			pst.setTimestamp(4, new Timestamp(Calendar.getInstance().getTimeInMillis()));
+//			//FLastUpdateUserID
+//			pst.setString(5, purInWarehsEntryInfo.getFLastUpdateUserID());
+//			//FLastUpdateTime
+//			pst.setTimestamp(6, new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			//FParentID
-			pst.setString(7, fparentid);
+			pst.setString(2, fparentid);
 			//fseq
-			pst.setInt(8, seq++);
+			pst.setInt(3, seq++);
 			//FMaterialID
-			pst.setString(9, purInWarehsEntryInfo.getFMaterialID());
+			pst.setString(4, purInWarehsEntryInfo.getFMaterialID());
 			//FUnitID
-			pst.setString(10, purInWarehsEntryInfo.getFUnitID());
+			pst.setString(5, purInWarehsEntryInfo.getFUnitID());
 			//Fqty
-			pst.setDouble(11, purInWarehsEntryInfo.getFQty());
+			pst.setDouble(6, purInWarehsEntryInfo.getFQty());
 			//FbaseUnitID
-			pst.setString(12, purInWarehsEntryInfo.getFbaseUnitID());
+			pst.setString(7, purInWarehsEntryInfo.getFbaseUnitID());
 			//FBaseQty
-			pst.setString(13, purInWarehsEntryInfo.getFBaseQty());
+			pst.setString(8, purInWarehsEntryInfo.getFBaseQty());
 			//FWarehouseID
-			pst.setString(14, purInWarehsEntryInfo.getFWarehouseID());
+			pst.setString(9, purInWarehsEntryInfo.getFWarehouseID());
 			//FPrice
-			pst.setDouble(15, purInWarehsEntryInfo.getFPrice());
+			pst.setDouble(10, purInWarehsEntryInfo.getFPrice());
 			//Famount
-			pst.setDouble(16, purInWarehsEntryInfo.getFamount());
+			pst.setDouble(11, purInWarehsEntryInfo.getFamount());
 			//FTaxRate
-			pst.setDouble(17, purInWarehsEntryInfo.getFTaxRate());
+			pst.setDouble(12, purInWarehsEntryInfo.getFTaxRate());
 			//FPurchaseOrgUnitID
-			pst.setString(18, purInWarehsEntryInfo.getFPurchaseOrgUnitID());
+			pst.setString(13, purInWarehsEntryInfo.getFPurchaseOrgUnitID());
 			
 			pst.addBatch(); 
 		}
