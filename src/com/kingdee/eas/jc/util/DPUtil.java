@@ -21,10 +21,10 @@ public class DPUtil {
 	 * @param writeConn
 	 * @return
 	 */
-	public static String getSupplierID(Connection readConn ,String fid, Connection writeConn){
-		String fnumberQuery = "select fnumber from T_BD_Supplier where fid = ?";
+	public static String getSupplierID(Connection readConn ,String fnumber, Connection writeConn){
+//		String fnumberQuery = "select fnumber from T_BD_Supplier where fnumber = ?";
 		String fidQuery = "select fid from T_BD_Supplier where fnumber= ?";
-		return getFid(readConn, fid, writeConn, fnumberQuery, fidQuery);
+		return getFidByFnumber(fnumber, writeConn, fidQuery);
 	}
 	
 	/**
@@ -36,7 +36,7 @@ public class DPUtil {
 	 */
 	public static String getCurrencyFid(Connection readConn ,String fid, Connection writeConn){
 		String fnumberQuery = "select fnumber from T_BD_Currency where fid = ?";
-		String fidQuery = "select fid from T_DB_WAREHOUSE where fnumber= ?";
+		String fidQuery = "select fid from T_BD_Currency where fnumber= ?";
 		return getFid(readConn, fid, writeConn, fnumberQuery, fidQuery);
 	}
 	
@@ -52,7 +52,22 @@ public class DPUtil {
 		String fidQuery = "select fid from T_DB_WAREHOUSE where fnumber= ?";
 		return getFid(readConn, fid, writeConn, fnumberQuery, fidQuery); 
 	}
+	
+	/**
+	 * 获得财务系统的仓库Fid.
+	 * @param readConn
+	 * @param fid 经营系统船舶主键.
+	 * @param writeConn
+	 * @return
+	 */
+	public static String getStorageOrgUnitID(Connection readConn ,String fid, Connection writeConn){
+		String fnumberQuery = "select fnumber from T_COS_Vessel where fid = ?";
+		String fidQuery = "select fid from T_DB_WAREHOUSE where fnumber= ?";
+		return getFid(readConn, fid, writeConn, fnumberQuery, fidQuery); 
+	}
 
+	
+	
 	/**
 	 * 获得成本中心主键Fid
 	 * @param readConn
@@ -62,6 +77,7 @@ public class DPUtil {
 	 */
 	public static String getCostCenterFid(Connection readConn, String fid, Connection writeConn){
 		String fnumberQuery = "select fnumber from T_COS_Vessel where fid = ?";
+//		String fnumberQuery = "select fnumber from T_ORG_CostCenter where fid = ?";
 		String fidQuery = "select fid from T_ORG_CostCenter where fnumber= ?";
 		return getFid(readConn, fid, writeConn, fnumberQuery, fidQuery); 
 	}
@@ -125,6 +141,18 @@ public class DPUtil {
 		return getFidByFnumber(fnumber, writeConn, fidQuery);
 	}
 	
+	/**
+	 * 根据船舶编码获取仓库Fid
+	 * @param readConn
+	 * @param fnumber 船舶编码 
+	 * @param writeConn
+	 * @return
+	 */
+	public static String getStorageOrgUnitIDByfnumber(Connection readConn, String fnumber, Connection writeConn) {
+		String fidQuery = "select fid from t_org_storage where fnumber= ?";
+		return getFidByFnumber(fnumber, writeConn, fidQuery);
+	}
+	
 	private static String getFidByFnumber(String fnumber, Connection writeConn, String fidQuery){
 		String res = "";
 		PreparedStatement writePs = null;
@@ -144,8 +172,14 @@ public class DPUtil {
 		return res;
 	}
 	
+	/**
+	 * 删除事件表里的信息.
+	 * @param readConn
+	 * @param tableName
+	 * @param fid
+	 */
 	public static void updateMiddleTable(Connection readConn, String tableName, String fid) {
-		String deleteSql = "delete from  " + tableName + "  where fid = ?";
+		String deleteSql = "delete from  " + tableName + "  where object_key = ?";
 		PreparedStatement ps = null;
 		try {
 			ps = readConn.prepareStatement(deleteSql);

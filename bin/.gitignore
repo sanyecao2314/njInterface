@@ -1,5 +1,5 @@
-/log/
 /.svn/
+/123.sql
 /DBConfig.propties
 /DBConfigMS.propties
 /T_COS_BROKER_COMM.properties
@@ -29,6 +29,6 @@
 /T_JY_COA_CARGO.properties
 /T_PRE_BigPrePayment.properties
 /T_PRE_PREPAY_MANAGE.properties
-/123.sql
 /com/
 /db.txt
+/log/

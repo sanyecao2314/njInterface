@@ -1,13 +1,18 @@
 package com.kingdee.eas.jc.services;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.kingdee.eas.jc.bean.EventInfo;
 import com.kingdee.eas.jc.bean.MaterialReqBillEntryInfo;
@@ -32,16 +37,20 @@ public class MaterialReqBillService {
 			MaterialReqBillInfo materialReqBillInfo = readAndTranslate(eventinfo);
 			doInsert(materialReqBillInfo);
 			
-			DPUtil.updateMiddleTable(getReadConn(), "", eventinfo.getObjectkey());
-			DPUtil.updateMiddleTable(getReadConn(), "", eventinfo.getObjectkey());
+			DPUtil.updateMiddleTable(getReadConn(), "OBJECT_NAME", eventinfo.getObjectkey());
+			DPUtil.updateMiddleTable(getReadConn(), "OBJECT_NAME", eventinfo.getObjectkey());
+			readConn.commit();
+			writeConn.commit();
 		} catch (Exception e) {
 			DBTools.rollback(getWriteConn());
+			DBTools.rollback(getReadConn());
 			LoggerUtil.logger.error("doProcess error.", e);
 		}finally{
 			DBTools.close(getWriteConn());
 		}
 	}
 	
+	String shipNumber = "";
 
 	private MaterialReqBillInfo readAndTranslate(EventInfo eventinfo) throws SQLException {
 		String querySql = "select * from T_COS_BUNKER_CONSUME where fid='" + eventinfo.getObjectkey() + "'";
@@ -50,10 +59,14 @@ public class MaterialReqBillService {
 		MaterialReqBillInfo materReqBillInfo = new MaterialReqBillInfo();
 		while (rs.next()) {
 			String str = rs.getString("FID");
-			materReqBillInfo.setFnumber(str);
-			materReqBillInfo.setFbizdate(rs.getDate("BIZ_DATE"));
+			Timestamp timestamp = rs.getTimestamp("BIZ_DATE");
+			Date date = new Date(timestamp.getYear(), timestamp.getMonth(), timestamp.getDate());
+			materReqBillInfo.setFbizdate(date);
 			str = rs.getString("STOCK_ORG");
-			materReqBillInfo.setFStorageOrgUnitID(DPUtil.getWarehouseFidByfnumber(getReadConn(), str, getWriteConn()));
+			shipNumber = str;
+			materReqBillInfo.setFStorageOrgUnitID(DPUtil.getStorageOrgUnitIDByfnumber(getReadConn(), str, getWriteConn()));
+			DateFormat df = new SimpleDateFormat("yyyyMMdd");
+			materReqBillInfo.setFnumber("LLCK-" + shipNumber + "-" + df.format(new java.util.Date()) + "-" + getSeqNo(date) );
 			materReqBillInfo.setFDescription(rs.getString("VOY_NO"));
 			str = rs.getString("COST_CENTER");
 			materReqBillInfo.setFCostCenterOrgUnitID(DPUtil.getCostCenterFid(getReadConn(), str, getWriteConn()));
@@ -87,16 +100,17 @@ public class MaterialReqBillService {
 		Connection writeConn = null;
 			writeConn = getWriteConn();
 			insertMaterialReqBillInfo(writeConn, materialReqBillInfo);
-			insertLsMaterialReqBillEntryInfo(writeConn, materialReqBillInfo.getFid(), materialReqBillInfo.getLsmaterBillEntryInfos());
-			writeConn.commit();
+			insertLsMaterialReqBillEntryInfo(writeConn, materialReqBillInfo, materialReqBillInfo.getLsmaterBillEntryInfos());
+			
 	}
 
 	private void insertMaterialReqBillInfo(Connection writeConn,
 			MaterialReqBillInfo materialReqBillInfo) throws SQLException {
 		String fid = DBTools.getUUid(writeConn, materialReqBillInfo.getBOStype());
 		materialReqBillInfo.setFid(fid);
-		String insertSql = "insert into T_IM_MaterialReqBill(fid, FControlUnitID, FCreatorID, FCreateTime, FLastUpdateUserID, FLastUpdateTime, fnumber, FTransactionTypeID, fbizdate, FStorageOrgUnitID, FBaseStatus, FCostCenterOrgUnitID, FBizTypeID, fdescription) "
-				+ " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		String insertSql = "insert into T_IM_MaterialReqBill(fid, FControlUnitID, FCreatorID, FCreateTime, FLastUpdateUserID, FLastUpdateTime, fnumber,"
+				+ " FTransactionTypeID, fbizdate, FStorageOrgUnitID, FBaseStatus, FCostCenterOrgUnitID, FBizTypeID, fdescription,fbilltypeid,fyear,fmonth,fday) "
+				+ " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		PreparedStatement pst = writeConn.prepareStatement(insertSql);
 		//fid
 		pst.setString(1, fid);
@@ -126,13 +140,22 @@ public class MaterialReqBillService {
 		pst.setString(13, materialReqBillInfo.getFBizTypeID());
 		//fdescription
 		pst.setString(14, materialReqBillInfo.getFDescription());
+		//
+		pst.setString(15, materialReqBillInfo.getFbilltypeid());
+		//
+		pst.setString(16, materialReqBillInfo.getFyear());
+		//
+		pst.setString(17, materialReqBillInfo.getFmonth());
+		//
+		pst.setString(18, materialReqBillInfo.getFday());
 		pst.execute();
 	}
 
-	private void insertLsMaterialReqBillEntryInfo(Connection writeConn, String fparentid,
+	private void insertLsMaterialReqBillEntryInfo(Connection writeConn, MaterialReqBillInfo materialReqBillInfo,
 			List<MaterialReqBillEntryInfo> lsmaterBillEntryInfos) throws Exception {
-		String insertSql = "insert into T_IM_MaterialReqBillEntry(fid, FParentID, fseq, FMaterialID, FUnitID, FQty, FAssistUnitID, FAssistQty, FWarehouseID) " 
-				+" values(?,?,?,?,?,?,?,?,?)";
+		String insertSql = "insert into T_IM_MaterialReqBillEntry(fid, FParentID, fseq, FMaterialID, FUnitID, FQty, FAssistUnitID, FAssistQty, FWarehouseID,"
+				+ "fstorageorgunitid,fcompanyorgunitid) " 
+				+" values(?,?,?,?,?,?,?,?,?,?,?)";
 		PreparedStatement pst = writeConn.prepareStatement(insertSql);
 		int seq = 1;
 		for (MaterialReqBillEntryInfo materialReqBillEntryInfo : lsmaterBillEntryInfos) {
@@ -148,7 +171,7 @@ public class MaterialReqBillService {
 //			//FLastUpdateTime
 //			pst.setTimestamp(6, new Timestamp(Calendar.getInstance().getTimeInMillis()));
 			//FParentID
-			pst.setString(2, fparentid);
+			pst.setString(2, materialReqBillInfo.getFid());
 			//fseq
 			pst.setInt(3, seq++);
 			//FMaterialID
@@ -164,6 +187,9 @@ public class MaterialReqBillService {
 			//FWarehouseID
 			pst.setString(9, materialReqBillEntryInfo.getFWarehouseID());
 			
+			pst.setString(10, materialReqBillInfo.getFStorageOrgUnitID());
+			
+			pst.setString(11, materialReqBillInfo.getFControlUnitID());
 			pst.addBatch(); 
 		}
 		pst.executeBatch();
@@ -210,6 +236,24 @@ public class MaterialReqBillService {
 		}
 		
 		return readConn;
+	}
+	
+	private static Map<String, Integer> seqNo = new HashMap<String, Integer>();
+	
+	/**
+	 * ªÒ»°À≥–Ú∫≈
+	 * @param date
+	 * @return
+	 */
+	private int getSeqNo(java.util.Date date){
+		DateFormat df = new SimpleDateFormat("yyyyMMdd");
+		String strDate = df.format(date);
+		int i = 1;
+		if (seqNo.containsKey(strDate)) {
+			i = seqNo.get(strDate);
+		}
+		seqNo.put(strDate, ++i);
+		return 1;
 	}
 	
 	

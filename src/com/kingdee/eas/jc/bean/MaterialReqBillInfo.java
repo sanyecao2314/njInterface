@@ -1,6 +1,8 @@
 package com.kingdee.eas.jc.bean;
 
 import java.sql.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 /**
@@ -26,6 +28,12 @@ public class MaterialReqBillInfo extends BaseInfo{
 	String FBizTypeID = "0rSFjAEeEADgAAyMwKgSQiQHQ1w=";
 	//航次
 	String FDescription;
+	//
+	String fbilltypeid = "50957179-0105-1000-e000-0163c0a812fd463ED552";
+	
+	String fyear;
+	String fmonth;
+	String fday;
 	
 	/* 子表信息 */
 	List<MaterialReqBillEntryInfo> lsmaterBillEntryInfos;
@@ -77,6 +85,35 @@ public class MaterialReqBillInfo extends BaseInfo{
 	}
 	public void setFDescription(String fDescription) {
 		FDescription = fDescription;
+	}
+
+	public String getFbilltypeid() {
+		return fbilltypeid;
+	}
+	public void setFbilltypeid(String fbilltypeid) {
+		this.fbilltypeid = fbilltypeid;
+	}
+	
+	public String getFyear() {
+		DateFormat df  = new SimpleDateFormat("yyyy");
+		return df.format(fbizdate);
+	}
+	public void setFyear(String fyear) {
+		this.fyear = fyear;
+	}
+	public String getFmonth() {
+		DateFormat df  = new SimpleDateFormat("yyyyMM");
+		return df.format(fbizdate);
+	}
+	public void setFmonth(String fmonth) {
+		this.fmonth = fmonth;
+	}
+	public String getFday() {
+		DateFormat df  = new SimpleDateFormat("yyyyMMdd");
+		return df.format(fbizdate);
+	}
+	public void setFday(String fday) {
+		this.fday = fday;
 	}
 	public String getBOStype(){
 		return "500AB75E";

@@ -56,8 +56,12 @@ public class DBReadUtil {
         cpds.setMinPoolSize(5);  
     }  
     public synchronized static DBReadUtil getInstance(){  
-        if(dbcputils==null)  
-            dbcputils=new DBReadUtil();  
+    	try {
+    		if(dbcputils==null)  
+    			dbcputils=new DBReadUtil();  
+		} catch (Exception e) {
+			LoggerUtil.logger.error(e.getMessage(), e);
+		}
         return dbcputils;  
     }  
 	
@@ -75,58 +79,11 @@ public class DBReadUtil {
 	 */
 	public Connection getConnection()
 			throws EASException {
-//		if (conn == null) {
-//			PropertiesUtil pu = new PropertiesUtil(DB_ENV);
-//			String driver = pu.getValue(Constants.READ_DRIVERCLASSNAME);
-//			String dbSId = pu.getValue(Constants.READ_JDBC_URL);
-//			String dbUser = pu.getValue(Constants.READ_JDBC_USERNAME);
-//			String dbPasswd = pu.getValue(Constants.READ_JDBC_PASSWORD);
-//			// 验证数据库地址和用户是否为空
-//			if (StringUtil.stringIsEmpty(dbSId) || StringUtil.stringIsEmpty(dbUser)) {
-//				throw new EASException("ERR206", "The DB_SID or DB_USER is null.");
-//			}
-//			
-//			try {
-//				// 加载驱动程序
-//				Class.forName(driver).newInstance();
-//				// 得到数据库连接
-//				conn = DriverManager.getConnection(dbSId, dbUser, dbPasswd);
-//			} catch (InstantiationException e) {
-//				// InstantiationException
-//				e.printStackTrace();
-//				throw new EASException("DBUtil/getConnection()#ERR200", e
-//						.getMessage()
-//						+ "#" + e.getCause());
-//			} catch (IllegalAccessException e) {
-//				// IllegalAccessException
-//				e.printStackTrace();
-//				LoggerUtil.logger.error(e.getMessage());
-//				throw new EASException("DBUtil/getConnection()#ERR200", e
-//						.getMessage()
-//						+ "#" + e.getCause());
-//			} catch (ClassNotFoundException e) {
-//				// ClassNotFoundException
-//				e.printStackTrace();
-//				LoggerUtil.logger.error(e.getMessage());
-//				throw new EASException("DBUtil/getConnection()#ERR200", e
-//						.getMessage()
-//						+ "#" + e.getCause());
-//			} catch (SQLException e) {
-//				// SQLException
-//				e.printStackTrace();
-//				LoggerUtil.logger.error(e.getMessage());
-//				throw new EASException("DBUtil/getConnection()#ERR200", e
-//						.getMessage()
-//						+ "#" + e.getCause());
-//			}
-//		}
-//		return conn;
-		
 		Connection con=null;  
         try {  
             con=cpds.getConnection();  
         } catch (SQLException e) {  
-            e.printStackTrace();  
+            LoggerUtil.logger.error(e.getMessage(), e);
         }  
         return con;  
 	}

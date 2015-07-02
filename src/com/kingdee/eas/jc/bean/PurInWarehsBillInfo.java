@@ -1,7 +1,11 @@
 package com.kingdee.eas.jc.bean;
 
 import java.sql.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.List;
+
+import com.kingdee.eas.jc.util.StringUtil;
 
 
 /**
@@ -31,10 +35,20 @@ public class PurInWarehsBillInfo extends BaseInfo{
 	String FExchangeRate;
 	//航次
 	String FDescription;
+	//
+	String fbiztypeid = "d8e80652-0106-1000-e000-04c5c0a812202407435C";
+	
+	//
+	String fbilltypeid = "50957179-0105-1000-e000-015fc0a812fd463ED552";
+	
+	String fyear;
+	String fmonth;
+	String fday;
 	/* 子表信息 */
 	List<PurInWarehsEntryInfo> lspurInWarehsEntryInfos;
 	
 	public String getFnumber() {
+//		"CGRK-" + 
 		return fnumber;
 	}
 	public void setFnumber(String fnumber) {
@@ -83,6 +97,9 @@ public class PurInWarehsBillInfo extends BaseInfo{
 		FCurrencyID = fCurrencyID;
 	}
 	public String getFExchangeRate() {
+		if (FExchangeRate == null || "".equals(FExchangeRate)) {
+			FExchangeRate = "1";
+		}
 		return FExchangeRate;
 	}
 	public void setFExchangeRate(String fExchangeRate) {
@@ -94,6 +111,40 @@ public class PurInWarehsBillInfo extends BaseInfo{
 	}
 	public void setFDescription(String fDescription) {
 		FDescription = fDescription;
+	}
+	
+	public String getFbiztypeid() {
+		return fbiztypeid;
+	}
+	public void setFbiztypeid(String fbiztypeid) {
+		this.fbiztypeid = fbiztypeid;
+	}
+	public String getFbilltypeid() {
+		return fbilltypeid;
+	}
+	public void setFbilltypeid(String fbilltypeid) {
+		this.fbilltypeid = fbilltypeid;
+	}
+	public String getFyear() {
+		DateFormat df  = new SimpleDateFormat("yyyy");
+		return df.format(fbizdate);
+	}
+	public void setFyear(String fyear) {
+		this.fyear = fyear;
+	}
+	public String getFmonth() {
+		DateFormat df  = new SimpleDateFormat("yyyyMM");
+		return df.format(fbizdate);
+	}
+	public void setFmonth(String fmonth) {
+		this.fmonth = fmonth;
+	}
+	public String getFday() {
+		DateFormat df  = new SimpleDateFormat("yyyyMMdd");
+		return df.format(fbizdate);
+	}
+	public void setFday(String fday) {
+		this.fday = fday;
 	}
 	@Override
 	public String getBOStype() {

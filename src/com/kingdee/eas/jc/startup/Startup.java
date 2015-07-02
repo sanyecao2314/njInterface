@@ -50,8 +50,7 @@ public class Startup {
 					e.printStackTrace();
 				}
 			} catch (Exception e) {
-				LoggerUtil.logger.error(e.getMessage());
-				e.printStackTrace();
+				LoggerUtil.logger.error(e.getMessage(),e);
 			}finally{
 				if (readConn != null) {
 					try {

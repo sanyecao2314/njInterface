@@ -24,7 +24,8 @@ public class EventDAO {
 		try {
 			stmt = conn.createStatement();
 			rs = stmt.executeQuery("select event_id, object_key, object_name, object_function, EVENT_STATUS from OBJECT_NAME "
-					+ "where object_name in ('T_COS_BUNKER_STOCKIN','T_COS_BUNKER_CONSUME')  order by event_id");
+//					+ "where object_name in ('T_COS_BUNKER_STOCKIN','T_COS_BUNKER_CONSUME')  order by event_id");
+					+ "where object_name in ('T_COS_BUNKER_CONSUME') and object_key='Lymza/ArSUiT3pJif7fOP0cQnlc='  order by event_id");
 			while (rs.next()) {
 				EventInfo eventInfo = new EventInfo();
 				String obj = null;
@@ -62,8 +63,7 @@ public class EventDAO {
 			}
 			
 		} catch (Exception e) {
-			e.printStackTrace();
-			LoggerUtil.logger.error(e.getMessage());
+			LoggerUtil.logger.error(e.getMessage(),e);
 		}finally{
 			// πÿ±’”Œ±Í
 			if (stmt != null) {
