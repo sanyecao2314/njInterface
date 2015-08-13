@@ -23,6 +23,7 @@ import com.kingdee.eas.jc.util.DBTools;
 import com.kingdee.eas.jc.util.DBWriteUtil;
 import com.kingdee.eas.jc.util.DPUtil;
 import com.kingdee.eas.jc.util.LoggerUtil;
+import com.kingdee.eas.jc.util.StringUtil;
 
 /**
  * 材料出库处理
@@ -64,7 +65,7 @@ public class MaterialReqBillService {
 			materReqBillInfo.setFbizdate(date);
 			str = rs.getString("STOCK_ORG");
 			shipNumber = str;
-			materReqBillInfo.setFStorageOrgUnitID(DPUtil.getStorageOrgUnitIDByfnumber(getReadConn(), str, getWriteConn()));
+//			materReqBillInfo.setFStorageOrgUnitID(DPUtil.getStorageOrgUnitIDByfnumber(getReadConn(), str, getWriteConn()));
 			DateFormat df = new SimpleDateFormat("yyyyMMdd");
 			materReqBillInfo.setFnumber("LLCK-" + shipNumber + "-" + df.format(new java.util.Date()) + "-" + getSeqNo(date) );
 			materReqBillInfo.setFDescription(rs.getString("VOY_NO"));
@@ -83,7 +84,8 @@ public class MaterialReqBillService {
 				materialReqBillEntryInfo.setFMaterialID(DPUtil.getMaterialFid(str, getWriteConn()));
 				materialReqBillEntryInfo.setFQty(rs.getDouble("QUANTITY"));
 				materialReqBillEntryInfo.setFAssistQty(rs.getDouble("BASE_QUANTITY"));
-				
+				materialReqBillEntryInfo.setFWarehouseID(DPUtil.getWarehouseFidByfnumber(getReadConn(), shipNumber, getWriteConn()));
+				materialReqBillEntryInfo.setFAssistUnitID(DPUtil.getMaterialBaseUtil(materialReqBillEntryInfo.getFMaterialID(), getWriteConn()));
 				lspurEntryInfos.add(materialReqBillEntryInfo);
 			} catch (Exception e) {
 				// TODO: handle exception
@@ -154,8 +156,8 @@ public class MaterialReqBillService {
 	private void insertLsMaterialReqBillEntryInfo(Connection writeConn, MaterialReqBillInfo materialReqBillInfo,
 			List<MaterialReqBillEntryInfo> lsmaterBillEntryInfos) throws Exception {
 		String insertSql = "insert into T_IM_MaterialReqBillEntry(fid, FParentID, fseq, FMaterialID, FUnitID, FQty, FAssistUnitID, FAssistQty, FWarehouseID,"
-				+ "fstorageorgunitid,fcompanyorgunitid) " 
-				+" values(?,?,?,?,?,?,?,?,?,?,?)";
+				+ "fstorageorgunitid,fcompanyorgunitid,FBaseUnitID) " 
+				+" values(?,?,?,?,?,?,?,?,?,?,?,?)";
 		PreparedStatement pst = writeConn.prepareStatement(insertSql);
 		int seq = 1;
 		for (MaterialReqBillEntryInfo materialReqBillEntryInfo : lsmaterBillEntryInfos) {
@@ -181,7 +183,7 @@ public class MaterialReqBillService {
 			//Fqty
 			pst.setDouble(6, materialReqBillEntryInfo.getFQty());
 			//FAssistUnitID
-			pst.setString(7, materialReqBillEntryInfo.getFAssistUnitID());
+			pst.setString(7, materialReqBillEntryInfo.getFUnitID());
 			//FAssistQty;
 			pst.setDouble(8, materialReqBillEntryInfo.getFAssistQty());
 			//FWarehouseID
@@ -190,6 +192,8 @@ public class MaterialReqBillService {
 			pst.setString(10, materialReqBillInfo.getFStorageOrgUnitID());
 			
 			pst.setString(11, materialReqBillInfo.getFControlUnitID());
+			
+			pst.setString(12, materialReqBillEntryInfo.getFAssistUnitID());
 			pst.addBatch(); 
 		}
 		pst.executeBatch();

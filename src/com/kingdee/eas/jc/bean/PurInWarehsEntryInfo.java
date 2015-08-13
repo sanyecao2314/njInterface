@@ -27,10 +27,8 @@ public class PurInWarehsEntryInfo extends BaseInfo{
 	double Famount;
 	//税率 17% 固定值.
 	double FTaxRate = 17d;
-	//采购组织
-	String FPurchaseOrgUnitID;
-	//仓库
-	String warehouse;
+	//采购组织  原油事业部
+	String FPurchaseOrgUnitID = "Fg/3htR2QAy9dbSisTDtxMznrtQ=";;
 	
 	public String getFParentID() {
 		return FParentID;
@@ -103,12 +101,6 @@ public class PurInWarehsEntryInfo extends BaseInfo{
 	}
 	public void setFseq(int fseq) {
 		this.fseq = fseq;
-	}
-	public String getWarehouse() {
-		return warehouse;
-	}
-	public void setWarehouse(String warehouse) {
-		this.warehouse = warehouse;
 	}
 	@Override
 	public String getBOStype() {

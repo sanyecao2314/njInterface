@@ -126,7 +126,13 @@ public class DPUtil {
 	 */
 	public static String getMaterialFid(String fnumber, Connection writeConn){
 		String fidQuery = "select fid from t_bd_material where fnumber = ?";
-		return getFidByFnumber(fnumber, writeConn, fidQuery);
+		String fid = getFidByFnumber(fnumber, writeConn, fidQuery);
+		if (StringUtil.stringIsEmpty(fid)) {
+			LoggerUtil.logger.error("material code is null .add test code " );
+			fid = "14JKoW+4S8moPw0iY178n0QJ5/A=";
+		}
+		
+		return fid;
 	}
 	
 	/**
@@ -168,6 +174,9 @@ public class DPUtil {
 			LoggerUtil.logger.error("getFidByFnumber error.", e);
 		}finally{
 			close(null, writePs, null, writeRS);
+		}
+		if(StringUtil.stringIsEmpty(res)){
+			LoggerUtil.logger.error("data error.fnumber=" + fnumber + "|query=" + fidQuery);
 		}
 		return res;
 	}
@@ -222,6 +231,30 @@ public class DPUtil {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	/**
+	 * 获取物料的基本计量单位.
+	 * @param fMaterialID
+	 * @return
+	 */
+	public static String getMaterialBaseUtil(String fMaterialID, Connection conn) {
+		String res = "";
+		PreparedStatement readPs = null;
+		ResultSet readRs = null;
+		try {
+			readPs = conn.prepareStatement("select FBaseUnit from t_bd_material where fid=? ");
+			readPs.setString(1, fMaterialID);
+			readRs = readPs.executeQuery();
+			if (readRs.next()) {
+				res = readRs.getString("FBaseUnit");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}finally{
+			close(readPs, null, readRs, null);
+		}
+		return res;
 	}
 
 }

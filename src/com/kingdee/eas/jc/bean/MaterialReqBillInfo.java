@@ -18,8 +18,8 @@ public class MaterialReqBillInfo extends BaseInfo{
 	String FTransactionTypeID = "1aa51711-0f60-455a-a3c2-43b86155098dB008DCA7";
 	//业务日期
 	Date fbizdate;
-	//库存组织
-	String FStorageOrgUnitID;
+	//库存组织  原油事业部
+	String FStorageOrgUnitID = "Fg/3htR2QAy9dbSisTDtxMznrtQ=";
 	//单据状态 保存
 	String FBaseStatus = "1";
 	//成本中心

@@ -23,6 +23,7 @@ import com.kingdee.eas.jc.util.DBTools;
 import com.kingdee.eas.jc.util.DBWriteUtil;
 import com.kingdee.eas.jc.util.DPUtil;
 import com.kingdee.eas.jc.util.LoggerUtil;
+import com.kingdee.eas.jc.util.StringUtil;
 
 /**
  * 采购入库处理
@@ -72,7 +73,7 @@ public class PurInWarehsBillService {
 //			//库存组织
 			str = rs.getString("STOCK_ORG");
 			shipNumber = str;
-			purInWarehsBillInfo.setFStorageOrgUnitID(DPUtil.getStorageOrgUnitIDByfnumber(getReadConn(), str, getWriteConn()));
+//			purInWarehsBillInfo.setFStorageOrgUnitID(DPUtil.getStorageOrgUnitIDByfnumber(getReadConn(), str, getWriteConn()));
 			//单据编号
 //			str = rs.getString("FID");
 			DateFormat df = new SimpleDateFormat("yyyyMMdd");
@@ -106,12 +107,12 @@ public class PurInWarehsBillService {
 			purInWarehsEntryInfo.setFMaterialID(DPUtil.getMaterialFid(str, getWriteConn()));
 			purInWarehsEntryInfo.setFQty(rs.getDouble("QUANTITY"));
 			purInWarehsEntryInfo.setFBaseQty(rs.getString("BASE_QUANTITY"));
+			purInWarehsEntryInfo.setFbaseUnitID(DPUtil.getMaterialBaseUtil(purInWarehsEntryInfo.getFMaterialID(), getWriteConn()));
 			//仓库
 			str = rs.getString("WAREHOUSE");
-			purInWarehsEntryInfo.setWarehouse(DPUtil.getWarehouseFid(getReadConn(), str, getWriteConn()));
+			purInWarehsEntryInfo.setFWarehouseID(DPUtil.getWarehouseFid(getReadConn(), str, getWriteConn()));
 			purInWarehsEntryInfo.setFPrice(rs.getDouble("PRICE"));
 			purInWarehsEntryInfo.setFamount(rs.getDouble("AMOUNT"));
-			
 			lspurEntryInfos.add(purInWarehsEntryInfo);
 		}
 		

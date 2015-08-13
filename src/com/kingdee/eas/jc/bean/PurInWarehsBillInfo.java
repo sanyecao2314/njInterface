@@ -23,8 +23,8 @@ public class PurInWarehsBillInfo extends BaseInfo{
 	Date fbizdate;
 	//供应商
 	String FSupplierID;
-	//库存组织
-	String FStorageOrgUnitID;
+	//库存组织 原油事业部
+	String FStorageOrgUnitID = "Fg/3htR2QAy9dbSisTDtxMznrtQ=";
 	//单据状态 1代表保存
 	String FBaseStatus = "1";
 	//付款方式 赊购
