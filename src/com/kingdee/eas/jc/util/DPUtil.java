@@ -83,6 +83,19 @@ public class DPUtil {
 	}
 	
 	/**
+	 * 获得计量单位主键
+	 * @param fid	经营系统 计量单位主键
+	 * @param readConn
+	 * @param writeConn
+	 * @return
+	 */
+	public static String getFUnitID(String fid, Connection readConn, Connection writeConn) {
+		String fnumberQuery = "select fnumber from t_bd_MeasureUnit where fid = ?";
+		String fidQuery = "select fid from t_bd_MeasureUnit where fnumber= ?";
+		return getFid(readConn, fid, writeConn, fnumberQuery, fidQuery); 
+	}
+	
+	/**
 	 * 获得财务系统相关基础资料ID
 	 * @param readConn
 	 * @param fid 原始fid.
@@ -256,5 +269,7 @@ public class DPUtil {
 		}
 		return res;
 	}
+
+
 
 }

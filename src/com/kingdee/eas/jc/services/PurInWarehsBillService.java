@@ -109,22 +109,40 @@ public class PurInWarehsBillService {
 			purInWarehsEntryInfo.setFMaterialID(DPUtil.getMaterialFid(str, getWriteConn()));
 			purInWarehsEntryInfo.setFQty(rs.getDouble("QUANTITY"));
 			purInWarehsEntryInfo.setFBaseQty(rs.getString("BASE_QUANTITY"));
+			// 计量单位
+			String unitId = rs.getString("UOM");
+			purInWarehsEntryInfo.setFUnitID(DPUtil.getFUnitID(unitId, getReadConn(), getWriteConn()));
+			//
 			purInWarehsEntryInfo.setFbaseUnitID(DPUtil.getMaterialBaseUtil(purInWarehsEntryInfo.getFMaterialID(), getWriteConn()));
 			//仓库
 			str = rs.getString("WAREHOUSE");
 			purInWarehsEntryInfo.setFWarehouseID(DPUtil.getWarehouseFid(getReadConn(), str, getWriteConn()));
 			// 传过来的是含税单价
 			purInWarehsEntryInfo.setFTaxPrice(rs.getDouble("PRICE"));
-			// 无税单价 = 含税金额/1.17
+			// 无税单价 = 含税单价/1.17
 			BigDecimal price = new BigDecimal(purInWarehsEntryInfo.getFTaxPrice()/1.17);  
 			purInWarehsEntryInfo.setFPrice(price.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue());
-			// 金额也是含税金额
+			// 金额也是含税金额(价税合计)
 			purInWarehsEntryInfo.setFTaxAmount(rs.getDouble("AMOUNT"));
-			//税额 = 含税金额 * 0.17 
-			BigDecimal tax = new BigDecimal(purInWarehsEntryInfo.getFTaxPrice() * 0.17);  
+			//税额 = (加税合计 / 1.17) * 0.17 
+			BigDecimal tax = new BigDecimal((purInWarehsEntryInfo.getFTaxPrice() / 1.17) * 0.17);  
 			purInWarehsEntryInfo.setFTax(tax.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue());
-			// 无税金额 = 含税金额  - 税额
+			// 无税金额 = 加税合计  - 税额
 			purInWarehsEntryInfo.setFamount(purInWarehsEntryInfo.getFTaxAmount() - purInWarehsEntryInfo.getFTax());
+			//实际成本=无税金额*汇率   
+			BigDecimal actualCost = new BigDecimal(purInWarehsEntryInfo.getFamount() * Double.valueOf(purInWarehsBillInfo.getFExchangeRate()));
+			purInWarehsEntryInfo.setFActualCost(actualCost.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue());
+			// 单位实际成本=实际成本/数量
+			BigDecimal unitActualCost = new BigDecimal(purInWarehsEntryInfo.getFActualCost() / purInWarehsEntryInfo.getFQty());
+			purInWarehsEntryInfo.setFUnitActualCost(unitActualCost.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue());
+			//采购成本=无税金额*汇率   
+			BigDecimal purchaseCost = new BigDecimal(purInWarehsEntryInfo.getFamount() * Double.valueOf(purInWarehsBillInfo.getFExchangeRate()));
+			purInWarehsEntryInfo.setFPurchaseCost(purchaseCost.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue());
+			//单位采购成本=采购成本/数量
+			BigDecimal unitPurchaseCost = new BigDecimal(purInWarehsEntryInfo.getFPurchaseCost() / purInWarehsEntryInfo.getFQty());
+			purInWarehsEntryInfo.setFUnitPurchaseCost(unitPurchaseCost.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue());
+			
+			
 			lspurEntryInfos.add(purInWarehsEntryInfo);
 		}
 		
@@ -200,8 +218,9 @@ public class PurInWarehsBillService {
 			List<PurInWarehsEntryInfo> lspurInWarehsPurInWarehsEntryInfos) throws Exception {
 		String insertSql = "insert into T_IM_PurInWarehsEntry(fid, FParentID, fseq, FMaterialID, FUnitID, FQty, FbaseUnitID, FBaseQty, FWarehouseID, FPrice, Famount, "
 				+ "FTaxRate, FPurchaseOrgUnitID,FSTORAGEORGUNITID,"
-				+ "FCOMPANYORGUNITID,FRECEIVESTORAGEORGUNITID,FTaxPrice,FTaxAmount,FTax) "
-				+ " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+				+ "FCOMPANYORGUNITID,FRECEIVESTORAGEORGUNITID,FTaxPrice,FTaxAmount,FTax,"
+				+ "FUnitPurchaseCost,FPurchaseCost,FUnitActualCost,FActualCost) "
+				+ " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		PreparedStatement pst = writeConn.prepareStatement(insertSql);
 		int seq = 1;
 		for (PurInWarehsEntryInfo purInWarehsEntryInfo : lspurInWarehsPurInWarehsEntryInfos) {
@@ -250,6 +269,15 @@ public class PurInWarehsBillService {
 			pst.setDouble(17,purInWarehsEntryInfo.getFTaxPrice()); 
 			pst.setDouble(18,purInWarehsEntryInfo.getFTaxAmount()); 
 			pst.setDouble(19,purInWarehsEntryInfo.getFTax()); 
+			
+			// 单位采购成本
+			pst.setDouble(20,purInWarehsEntryInfo.getFUnitPurchaseCost()); 
+			// 采购成本
+			pst.setDouble(21,purInWarehsEntryInfo.getFPurchaseCost()); 
+			// 单位实际成本
+			pst.setDouble(22,purInWarehsEntryInfo.getFUnitActualCost()); 
+			// 实际成本
+			pst.setDouble(23,purInWarehsEntryInfo.getFActualCost()); 
 			pst.addBatch(); 
 		}
 		pst.executeBatch();

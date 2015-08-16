@@ -87,6 +87,9 @@ public class MaterialReqBillService {
 				materialReqBillEntryInfo.setFAssistQty(rs.getDouble("BASE_QUANTITY"));
 				materialReqBillEntryInfo.setFWarehouseID(DPUtil.getWarehouseFidByfnumber(getReadConn(), shipNumber, getWriteConn()));
 				materialReqBillEntryInfo.setFAssistUnitID(DPUtil.getMaterialBaseUtil(materialReqBillEntryInfo.getFMaterialID(), getWriteConn()));
+				// 计量单位
+				String unitId = rs.getString("UOM");
+				materialReqBillEntryInfo.setFUnitID(DPUtil.getFUnitID(unitId, getReadConn(), getWriteConn()));
 				lspurEntryInfos.add(materialReqBillEntryInfo);
 			} catch (Exception e) {
 				// TODO: handle exception

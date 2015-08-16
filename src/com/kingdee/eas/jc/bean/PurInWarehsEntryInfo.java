@@ -34,8 +34,15 @@ public class PurInWarehsEntryInfo extends BaseInfo{
 	// 税额
 	double FTax = 0d;
 	//采购组织  原油事业部
-	String FPurchaseOrgUnitID = "Fg/3htR2QAy9dbSisTDtxMznrtQ=";;
-	
+	String FPurchaseOrgUnitID = "Fg/3htR2QAy9dbSisTDtxMznrtQ=";
+	// 单位采购成本
+	double FUnitPurchaseCost;
+	// 采购成本
+	double FPurchaseCost;
+	// 单位实际成本
+	double FUnitActualCost;
+	// 实际成本
+	double FActualCost;
 	public String getFParentID() {
 		return FParentID;
 	}
@@ -125,6 +132,30 @@ public class PurInWarehsEntryInfo extends BaseInfo{
 	}
 	public void setFTax(double fTax) {
 		FTax = fTax;
+	}
+	public double getFUnitPurchaseCost() {
+		return FUnitPurchaseCost;
+	}
+	public void setFUnitPurchaseCost(double fUnitPurchaseCost) {
+		FUnitPurchaseCost = fUnitPurchaseCost;
+	}
+	public double getFPurchaseCost() {
+		return FPurchaseCost;
+	}
+	public void setFPurchaseCost(double fPurchaseCost) {
+		FPurchaseCost = fPurchaseCost;
+	}
+	public double getFUnitActualCost() {
+		return FUnitActualCost;
+	}
+	public void setFUnitActualCost(double fUnitActualCost) {
+		FUnitActualCost = fUnitActualCost;
+	}
+	public double getFActualCost() {
+		return FActualCost;
+	}
+	public void setFActualCost(double fActualCost) {
+		FActualCost = fActualCost;
 	}
 	@Override
 	public String getBOStype() {
