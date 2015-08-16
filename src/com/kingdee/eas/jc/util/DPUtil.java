@@ -193,7 +193,7 @@ public class DPUtil {
 		try {
 			ps = readConn.prepareStatement(deleteSql);
 			ps.setString(1, fid);
-//			ps.execute();
+			ps.execute();
 		} catch (SQLException e) {
 			LoggerUtil.logger.error("update middleTable error.", e);
 		}finally{

@@ -21,12 +21,18 @@ public class PurInWarehsEntryInfo extends BaseInfo{
 	String FBaseQty;
 	//仓库
 	String FWarehouseID;
-	//单价
+	// 单价
 	double FPrice;
-	//金额
+	// 含税单价
+	double FTaxPrice;
+	// 金额
 	double Famount;
+	// 价税合计
+	double FTaxAmount;
 	//税率 17% 固定值.
 	double FTaxRate = 17d;
+	// 税额
+	double FTax = 0d;
 	//采购组织  原油事业部
 	String FPurchaseOrgUnitID = "Fg/3htR2QAy9dbSisTDtxMznrtQ=";;
 	
@@ -101,6 +107,24 @@ public class PurInWarehsEntryInfo extends BaseInfo{
 	}
 	public void setFseq(int fseq) {
 		this.fseq = fseq;
+	}
+	public double getFTaxPrice() {
+		return FTaxPrice;
+	}
+	public void setFTaxPrice(double fTaxPrice) {
+		FTaxPrice = fTaxPrice;
+	}
+	public double getFTaxAmount() {
+		return FTaxAmount;
+	}
+	public void setFTaxAmount(double fTaxAmount) {
+		FTaxAmount = fTaxAmount;
+	}
+	public double getFTax() {
+		return FTax;
+	}
+	public void setFTax(double fTax) {
+		FTax = fTax;
 	}
 	@Override
 	public String getBOStype() {

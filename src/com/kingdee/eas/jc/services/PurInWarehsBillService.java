@@ -1,5 +1,6 @@
 package com.kingdee.eas.jc.services;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -23,6 +24,7 @@ import com.kingdee.eas.jc.util.DBTools;
 import com.kingdee.eas.jc.util.DBWriteUtil;
 import com.kingdee.eas.jc.util.DPUtil;
 import com.kingdee.eas.jc.util.LoggerUtil;
+import com.kingdee.eas.jc.util.PropertiesUtil;
 import com.kingdee.eas.jc.util.StringUtil;
 
 /**
@@ -111,8 +113,18 @@ public class PurInWarehsBillService {
 			//仓库
 			str = rs.getString("WAREHOUSE");
 			purInWarehsEntryInfo.setFWarehouseID(DPUtil.getWarehouseFid(getReadConn(), str, getWriteConn()));
-			purInWarehsEntryInfo.setFPrice(rs.getDouble("PRICE"));
-			purInWarehsEntryInfo.setFamount(rs.getDouble("AMOUNT"));
+			// 传过来的是含税单价
+			purInWarehsEntryInfo.setFTaxPrice(rs.getDouble("PRICE"));
+			// 无税单价 = 含税金额/1.17
+			BigDecimal price = new BigDecimal(purInWarehsEntryInfo.getFTaxPrice()/1.17);  
+			purInWarehsEntryInfo.setFPrice(price.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue());
+			// 金额也是含税金额
+			purInWarehsEntryInfo.setFTaxAmount(rs.getDouble("AMOUNT"));
+			//税额 = 含税金额 * 0.17 
+			BigDecimal tax = new BigDecimal(purInWarehsEntryInfo.getFTaxPrice() * 0.17);  
+			purInWarehsEntryInfo.setFTax(tax.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue());
+			// 无税金额 = 含税金额  - 税额
+			purInWarehsEntryInfo.setFamount(purInWarehsEntryInfo.getFTaxAmount() - purInWarehsEntryInfo.getFTax());
 			lspurEntryInfos.add(purInWarehsEntryInfo);
 		}
 		
@@ -187,8 +199,9 @@ public class PurInWarehsBillService {
 	private void insertLsPurInWarehsEntryInfo(Connection writeConn,PurInWarehsBillInfo purInWarehsBillInfo,
 			List<PurInWarehsEntryInfo> lspurInWarehsPurInWarehsEntryInfos) throws Exception {
 		String insertSql = "insert into T_IM_PurInWarehsEntry(fid, FParentID, fseq, FMaterialID, FUnitID, FQty, FbaseUnitID, FBaseQty, FWarehouseID, FPrice, Famount, "
-				+ "FTaxRate, FPurchaseOrgUnitID,FSTORAGEORGUNITID,FCOMPANYORGUNITID,FRECEIVESTORAGEORGUNITID) "
-				+ " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+				+ "FTaxRate, FPurchaseOrgUnitID,FSTORAGEORGUNITID,"
+				+ "FCOMPANYORGUNITID,FRECEIVESTORAGEORGUNITID,FTaxPrice,FTaxAmount,FTax) "
+				+ " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		PreparedStatement pst = writeConn.prepareStatement(insertSql);
 		int seq = 1;
 		for (PurInWarehsEntryInfo purInWarehsEntryInfo : lspurInWarehsPurInWarehsEntryInfos) {
@@ -234,6 +247,9 @@ public class PurInWarehsBillService {
 			//purInWarehsBillInfo
 			pst.setString(16,purInWarehsBillInfo.getFStorageOrgUnitID()); 
 			
+			pst.setDouble(17,purInWarehsEntryInfo.getFTaxPrice()); 
+			pst.setDouble(18,purInWarehsEntryInfo.getFTaxAmount()); 
+			pst.setDouble(19,purInWarehsEntryInfo.getFTax()); 
 			pst.addBatch(); 
 		}
 		pst.executeBatch();
@@ -291,11 +307,26 @@ public class PurInWarehsBillService {
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		String strDate = df.format(date);
 		int i = 1;
+		/*
+		 * 
 		if (seqNo.containsKey(strDate)) {
 			i = seqNo.get(strDate);
 		}
 		seqNo.put(strDate, ++i);
-		return 1;
+		 */
+		try {
+			PropertiesUtil pu = new PropertiesUtil("resource/fnumber.propties");
+			String strNo = pu.getValue(strDate);
+			if (strNo == null && !"".equals(strNo)) {
+				pu.setValue(strDate, i + "");
+			} else {
+				Integer no = Integer.parseInt(strNo);
+				i = no + 1;
+			}
+		} catch (EASException e) {
+			e.printStackTrace();
+		}
+		return i;
 	}
 	
 }

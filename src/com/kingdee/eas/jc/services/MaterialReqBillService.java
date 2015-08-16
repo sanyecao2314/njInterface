@@ -23,6 +23,7 @@ import com.kingdee.eas.jc.util.DBTools;
 import com.kingdee.eas.jc.util.DBWriteUtil;
 import com.kingdee.eas.jc.util.DPUtil;
 import com.kingdee.eas.jc.util.LoggerUtil;
+import com.kingdee.eas.jc.util.PropertiesUtil;
 import com.kingdee.eas.jc.util.StringUtil;
 
 /**
@@ -253,10 +254,24 @@ public class MaterialReqBillService {
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
 		String strDate = df.format(date);
 		int i = 1;
+		/*
 		if (seqNo.containsKey(strDate)) {
 			i = seqNo.get(strDate);
 		}
 		seqNo.put(strDate, ++i);
+		 */
+		try {
+			PropertiesUtil pu = new PropertiesUtil("resource/fnumber.propties");
+			String strNo = pu.getValue(strDate);
+			if (strNo == null && !"".equals(strNo)) {
+				pu.setValue(strDate, i + "");
+			} else {
+				Integer no = Integer.parseInt(strNo);
+				i = no + 1;
+			}
+		} catch (EASException e) {
+			e.printStackTrace();
+		}
 		return 1;
 	}
 	

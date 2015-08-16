@@ -3,8 +3,10 @@ package com.kingdee.eas.jc.util;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Properties;
 
 import com.kingdee.eas.jc.exception.EASException;
@@ -40,7 +42,6 @@ public class PropertiesUtil {
 	public PropertiesUtil(String propertiesPath) throws EASException {
 
 		try {
-
 			//º”‘ÿ≈‰÷√Œƒº˛
 			InputStream in = new BufferedInputStream(new FileInputStream(
 					propertiesPath));
@@ -80,5 +81,21 @@ public class PropertiesUtil {
 			return result;
 		}
 		return result.trim();
+	}
+	
+	public void setValue(String key, String value){
+		 try {
+			OutputStream outputStream = new FileOutputStream("resource/fnumber.propties");
+			properties.setProperty(key, value);  
+			properties.store(outputStream, "Update '" + key + "' value");
+			outputStream.close(); 
+		 } catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}  
+		 
 	}
 }
