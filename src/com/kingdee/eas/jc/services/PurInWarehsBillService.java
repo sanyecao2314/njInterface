@@ -87,6 +87,9 @@ public class PurInWarehsBillService {
 			//币种 CURRENCY_ID
 			str = rs.getString("CURRENCY_ID");
 			purInWarehsBillInfo.setFCurrencyID(DPUtil.getCurrencyFid(getReadConn(), str, getWriteConn()));
+			//汇率
+			purInWarehsBillInfo.setFExchangeRate(DPUtil.getExchange(purInWarehsBillInfo.getFCurrencyID(), getWriteConn()));
+			
 //			//成本中心
 //			String str = rs.getString("COST_CENTER");
 //			//业务类型
@@ -125,7 +128,7 @@ public class PurInWarehsBillService {
 			// 金额也是含税金额(价税合计)
 			purInWarehsEntryInfo.setFTaxAmount(rs.getDouble("AMOUNT"));
 			//税额 = (加税合计 / 1.17) * 0.17 
-			BigDecimal tax = new BigDecimal((purInWarehsEntryInfo.getFTaxPrice() / 1.17) * 0.17);  
+			BigDecimal tax = new BigDecimal((purInWarehsEntryInfo.getFTaxAmount() / 1.17) * 0.17);  
 			purInWarehsEntryInfo.setFTax(tax.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue());
 			// 无税金额 = 加税合计  - 税额
 			purInWarehsEntryInfo.setFamount(purInWarehsEntryInfo.getFTaxAmount() - purInWarehsEntryInfo.getFTax());
@@ -164,8 +167,8 @@ public class PurInWarehsBillService {
 		purInWarehsBillInfo.setFid(fid);
 		String insertSql = "insert into T_IM_PurInWarehsBill(fid, FControlUnitID, FCreatorID, FCreateTime, FLastUpdateUserID, FLastUpdateTime, fnumber,"
 				+ " FTransactionTypeID, fbizdate, FSupplierID, FStorageOrgUnitID, FBaseStatus, FPaymentTypeID, FCurrencyID, FExchangeRate, fdescription,"
-				+ "fbiztypeid,fbilltypeid,fyear,fmonth,fday) "
-				+ " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+				+ "fbiztypeid,fbilltypeid,fyear,fmonth,fday,fisintax,fispriceintax,fadminorgunitid) "
+				+ " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		PreparedStatement pst = writeConn.prepareStatement(insertSql);
 		//fid
 		pst.setString(1, fid);
@@ -197,7 +200,7 @@ public class PurInWarehsBillService {
 		//FCurrencyID
 		pst.setString(14, purInWarehsBillInfo.getFCurrencyID());
 		//FExchangeRate
-		pst.setString(15, purInWarehsBillInfo.getFExchangeRate());
+		pst.setDouble(15, purInWarehsBillInfo.getFExchangeRate());
 		//fdescription
 		pst.setString(16, purInWarehsBillInfo.getFDescription());
 		//
@@ -210,7 +213,12 @@ public class PurInWarehsBillService {
 		pst.setString(20, purInWarehsBillInfo.getFmonth());
 		//fday
 		pst.setString(21, purInWarehsBillInfo.getFday());
+		//fday
+		pst.setString(22, "1");
+		//fday
+		pst.setString(23, "1");
 		
+		pst.setString(24, DPUtil.getAdminOrgUnitId(shipNumber, getWriteConn()));
 		pst.execute();
 	}
 
@@ -219,8 +227,9 @@ public class PurInWarehsBillService {
 		String insertSql = "insert into T_IM_PurInWarehsEntry(fid, FParentID, fseq, FMaterialID, FUnitID, FQty, FbaseUnitID, FBaseQty, FWarehouseID, FPrice, Famount, "
 				+ "FTaxRate, FPurchaseOrgUnitID,FSTORAGEORGUNITID,"
 				+ "FCOMPANYORGUNITID,FRECEIVESTORAGEORGUNITID,FTaxPrice,FTaxAmount,FTax,"
-				+ "FUnitPurchaseCost,FPurchaseCost,FUnitActualCost,FActualCost) "
-				+ " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+				+ "FUnitPurchaseCost,FPurchaseCost,FUnitActualCost,FActualCost,"
+				+ "FLocalPrice,FLocalAmount,FLocalTax,FLocalTaxAmount,FActualPrice,FActualTaxPrice) "
+				+ " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		PreparedStatement pst = writeConn.prepareStatement(insertSql);
 		int seq = 1;
 		for (PurInWarehsEntryInfo purInWarehsEntryInfo : lspurInWarehsPurInWarehsEntryInfos) {
@@ -241,14 +250,14 @@ public class PurInWarehsBillService {
 			pst.setInt(3, seq++);
 			//FMaterialID
 			pst.setString(4, purInWarehsEntryInfo.getFMaterialID());
-			//FUnitID
-			pst.setString(5, purInWarehsEntryInfo.getFUnitID());
+			//FUnitID 
+			pst.setString(5, purInWarehsEntryInfo.getFbaseUnitID());
 			//Fqty
 			pst.setDouble(6, purInWarehsEntryInfo.getFQty());
 			//FbaseUnitID
 			pst.setString(7, purInWarehsEntryInfo.getFbaseUnitID());
 			//FBaseQty
-			pst.setString(8, purInWarehsEntryInfo.getFBaseQty());
+			pst.setDouble(8, purInWarehsEntryInfo.getFQty());
 			//FWarehouseID
 			pst.setString(9, purInWarehsEntryInfo.getFWarehouseID());
 			//FPrice
@@ -278,6 +287,23 @@ public class PurInWarehsBillService {
 			pst.setDouble(22,purInWarehsEntryInfo.getFUnitActualCost()); 
 			// 实际成本
 			pst.setDouble(23,purInWarehsEntryInfo.getFActualCost()); 
+			
+			//表体：“实际单价”＝“单价”	FLocalPrice
+			BigDecimal localtax = new BigDecimal(purInWarehsEntryInfo.getFPrice() * Double.valueOf(purInWarehsBillInfo.getFExchangeRate()));
+			pst.setDouble(24, localtax.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue());
+			//表体：“实际含税单价”＝“含税单价”	FLocalAmount
+			localtax = new BigDecimal(purInWarehsEntryInfo.getFTaxPrice() * Double.valueOf(purInWarehsBillInfo.getFExchangeRate()));
+			pst.setDouble(25, localtax.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue());
+			//表体：“税额本位币”＝税额*汇率	FLocalTax
+			localtax = new BigDecimal(purInWarehsEntryInfo.getFTax() * Double.valueOf(purInWarehsBillInfo.getFExchangeRate()));
+			pst.setDouble(26, localtax.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue());
+			//表体：“价税合计本位币”未传递＝价税合计*汇率	FLocalTaxAmount
+			BigDecimal localTaxAmount = new BigDecimal(purInWarehsEntryInfo.getFTaxAmount() * Double.valueOf(purInWarehsBillInfo.getFExchangeRate()));
+			pst.setDouble(27, localTaxAmount.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue());
+			//表体：“实际单价”＝“单价”	FLocalPrice
+			pst.setDouble(28, purInWarehsEntryInfo.getFPrice());
+			//表体：“实际含税单价”＝“含税单价”	FLocalAmount
+			pst.setDouble(29, purInWarehsEntryInfo.getFTaxPrice());
 			pst.addBatch(); 
 		}
 		pst.executeBatch();

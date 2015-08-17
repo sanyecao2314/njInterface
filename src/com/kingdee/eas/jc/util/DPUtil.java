@@ -270,6 +270,45 @@ public class DPUtil {
 		return res;
 	}
 
+	/**
+	 * 获得部门
+	 * @param shipNumber
+	 * @param writeConn
+	 * @return
+	 */
+	public static String getAdminOrgUnitId(String shipNumber, Connection writeConn) {
+		String fidQuery = "select  fid from t_org_admin where fnumber=?";
+		return getFidByFnumber(shipNumber, writeConn, fidQuery);
+	}
+
+	/**
+	 * 获取汇率
+	 * @param fid
+	 * @param writeConn
+	 * @return
+	 */
+	public static double getExchange(String fid, Connection writeConn){
+		String querySql = "select a.fconvertRate from T_BD_ExchangeRate a "
+				+ "inner join T_BD_ExchangeAux b on a. fexchangeauxid = b.fid "
+				+ "where b.fsourcecurrencyid=? and b.ftargetcurrencyid='dfd38d11-00fd-1000-e000-1ebdc0a8100dDEB58FDC' and a.fisusedbg = 0 "
+				+ "order by a.favailtime desc ";
+		double res = 1d;
+		PreparedStatement writePs = null;
+		ResultSet writeRS = null;
+		try {
+				writePs = writeConn.prepareStatement(querySql);
+				writePs.setString(1, fid);
+				writeRS = writePs.executeQuery();
+				if(writeRS.next()){
+					res = writeRS.getDouble("fid");
+				}
+		} catch (SQLException e) {
+			LoggerUtil.logger.error("getFidByFnumber error.", e);
+		}finally{
+			close(null, writePs, null, writeRS);
+		}
+		return res;
+	}
 
 
 }

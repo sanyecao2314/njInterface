@@ -183,11 +183,11 @@ public class MaterialReqBillService {
 			//FMaterialID
 			pst.setString(4, materialReqBillEntryInfo.getFMaterialID());
 			//FUnitID
-			pst.setString(5, materialReqBillEntryInfo.getFUnitID());
+			pst.setString(5, materialReqBillEntryInfo.getFAssistUnitID());
 			//Fqty
 			pst.setDouble(6, materialReqBillEntryInfo.getFQty());
 			//FAssistUnitID
-			pst.setString(7, materialReqBillEntryInfo.getFUnitID());
+			pst.setString(7, materialReqBillEntryInfo.getFAssistUnitID());
 			//FAssistQty;
 			pst.setDouble(8, materialReqBillEntryInfo.getFAssistQty());
 			//FWarehouseID

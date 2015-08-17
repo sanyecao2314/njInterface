@@ -34,12 +34,15 @@ public class DataProcess {
 	 * @param list
 	 */
 	public static void processEventList(List list) {
-		if (list == null || list.size() <= 0)
+		if (list == null || list.size() <= 0){
+			LoggerUtil.logger.info("no data ");
 			return;
+		}
 		for (int i = 0; i < list.size(); i++) {
 			EventInfo eventinfo = (EventInfo) list.get(i);
 			processEventInfo(eventinfo);
 		}
+		LoggerUtil.logger.info("data size=" + list.size());
 	}
 
 	/**

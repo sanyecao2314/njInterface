@@ -32,7 +32,7 @@ public class PurInWarehsBillInfo extends BaseInfo{
 	//±Ò±ð
 	String FCurrencyID;
 	//»ãÂÊ
-	String FExchangeRate;
+	double FExchangeRate = 1d;
 	//º½´Î
 	String FDescription;
 	//
@@ -96,13 +96,10 @@ public class PurInWarehsBillInfo extends BaseInfo{
 	public void setFCurrencyID(String fCurrencyID) {
 		FCurrencyID = fCurrencyID;
 	}
-	public String getFExchangeRate() {
-		if (FExchangeRate == null || "".equals(FExchangeRate)) {
-			FExchangeRate = "1";
-		}
+	public double getFExchangeRate() {
 		return FExchangeRate;
 	}
-	public void setFExchangeRate(String fExchangeRate) {
+	public void setFExchangeRate(double fExchangeRate) {
 		FExchangeRate = fExchangeRate;
 	}
 
