@@ -79,7 +79,7 @@ public class PurInWarehsBillService {
 			//单据编号
 //			str = rs.getString("FID");
 			DateFormat df = new SimpleDateFormat("yyyyMMdd");
-			purInWarehsBillInfo.setFnumber("CGRK-" + shipNumber + "-" + df.format(new java.util.Date()) + "-" + getSeqNo(date) );
+			purInWarehsBillInfo.setFnumber("CGRK-" + shipNumber + "-" + df.format(new java.util.Date()) + "-" + getSeqNo() );
 //			//部门
 //			String str = rs.getString("DEPARTMENT");
 //			//单据状态
@@ -357,9 +357,9 @@ public class PurInWarehsBillService {
 	 * @param date
 	 * @return
 	 */
-	private int getSeqNo(java.util.Date date){
+	private int getSeqNo(){
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
-		String strDate = df.format(date);
+		String strDate = df.format(new java.util.Date());
 		int i = 1;
 		/*
 		 * 

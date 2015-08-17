@@ -68,7 +68,7 @@ public class MaterialReqBillService {
 			shipNumber = str;
 //			materReqBillInfo.setFStorageOrgUnitID(DPUtil.getStorageOrgUnitIDByfnumber(getReadConn(), str, getWriteConn()));
 			DateFormat df = new SimpleDateFormat("yyyyMMdd");
-			materReqBillInfo.setFnumber("LLCK-" + shipNumber + "-" + df.format(new java.util.Date()) + "-" + getSeqNo(date) );
+			materReqBillInfo.setFnumber("LLCK-" + shipNumber + "-" + df.format(new java.util.Date()) + "-" + getSeqNo() );
 			materReqBillInfo.setFDescription(rs.getString("VOY_NO"));
 			str = rs.getString("COST_CENTER");
 			materReqBillInfo.setFCostCenterOrgUnitID(DPUtil.getCostCenterFid(getReadConn(), str, getWriteConn()));
@@ -92,8 +92,7 @@ public class MaterialReqBillService {
 				materialReqBillEntryInfo.setFUnitID(DPUtil.getFUnitID(unitId, getReadConn(), getWriteConn()));
 				lspurEntryInfos.add(materialReqBillEntryInfo);
 			} catch (Exception e) {
-				// TODO: handle exception
-				e.printStackTrace();
+				LoggerUtil.logger.error("error", e);
 			}
 		}
 
@@ -253,9 +252,9 @@ public class MaterialReqBillService {
 	 * @param date
 	 * @return
 	 */
-	private int getSeqNo(java.util.Date date){
+	private int getSeqNo(){
 		DateFormat df = new SimpleDateFormat("yyyyMMdd");
-		String strDate = df.format(date);
+		String strDate = df.format(new java.util.Date());
 		int i = 1;
 		/*
 		if (seqNo.containsKey(strDate)) {
