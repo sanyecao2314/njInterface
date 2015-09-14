@@ -300,7 +300,7 @@ public class DPUtil {
 				writePs.setString(1, fid);
 				writeRS = writePs.executeQuery();
 				if(writeRS.next()){
-					res = writeRS.getDouble("fid");
+					res = writeRS.getDouble("fconvertRate");
 				}
 		} catch (SQLException e) {
 			LoggerUtil.logger.error("getFidByFnumber error.", e);
